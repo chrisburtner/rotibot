@@ -1,0 +1,16 @@
+#!/bin/bash
+
+ROOT_DIR=$(cat var/root_dir)
+
+case "$1" in
+	controller)
+		$ROOT_DIR/controller
+		# will eventually want to execute in background
+		;;
+	aligner)
+		$ROOT_DIR/alignerd $ROOT_DIR
+		;;
+	*)
+		echo $"Usage: $0 {aligner|controller}"
+		exit 1
+esac

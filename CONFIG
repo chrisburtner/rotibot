@@ -1,0 +1,85 @@
+#!/bin/bash
+
+TESTING=false
+
+
+# save working directory
+WD=(pwd)
+
+# define constants
+ROOT_DIR=$(cat var/root_dir)
+WEB_DIR=/var/www/html/wormbot
+CGI_DIR=$ROOT_DIR/cgi-bin
+
+# handle installation directory
+if [ "$#" -eq 1 ]
+then
+	ROOT_DIR=$1
+	echo $ROOT_DIR > var/root_dir
+elif [ "$#" -gt 1 ]
+then
+	echo "Usage: $0 [DIR]"
+	exit
+fi
+
+
+# setup directories in root
+if [ ! -d "/wormbot" ]; then
+sudo mkdir $ROOT_DIR #this needs to be setup already in the LVM...should just symlink it but if it's not there we need to make it
+fi
+
+sudo mkdir $CGI_DIR #make the password protected CGI-bin
+#sudo mkdir $WEB_DIR
+sudo ln --symbolic $ROOT_DIR $WEB_DIR
+#sudo ln --symbolic -T $ROOT_DIR/experiments $WEB_DIR/experiments
+#sudo ln --symbolic $WEB_DIR /var/www/html/wormbot
+sudo chmod a+rw $WEB_DIR
+sudo echo ,,,,,,, > $ROOT_DIR/RRRjoblist.csv
+sudo chmod a+rw $ROOT_DIR/RRRjoblist.csv
+
+
+# move necessary files to root dir
+sudo cp camera.config experimentuploader.html graphmaker.html platecoordinates.dat generate_coordinates.py bin/alignerd bin/controller wormbot_template.csv bin/master_control_program security/.htpasswd $ROOT_DIR
+sudo echo 0 > $ROOT_DIR/currexpid.dat
+sudo chmod a+rw $ROOT_DIR/currexpid.dat
+
+
+# move necessary files to web dir
+sudo cp -r img $WEB_DIR/img
+sudo cp plateform.html $WEB_DIR
+sudo cp www/html/status.html $WEB_DIR
+
+
+# move necessary files to cgi-bin
+sudo cp data_path bin/experimentbrowser bin/marker bin/scheduler bin/cgiccretro bin/wormlistupdater bin/backupexperiment bin/deleteexperiment bin/wormbotstatus bin/graphmaker bin/cropFrames $CGI_DIR
+sudo cp ../ffmpeg-3.4/ffmpeg $CGI_DIR
+sudo cp data_path /usr/lib/cgi-bin #this is for compatibilty following security changes to move cgi bin into /wormbot
+
+
+# move retrograde files to the web html retrograde directory
+sudo cp -r retrograde/ /var/www/html/
+
+# move script for wormbot in command-line
+sudo cp bin/wormbot /bin
+
+#move launch script to /etc/rc.local
+sudo head -n -1 /etc/rc.local > /tmp/temp.rc.local ; mv /tmp/temp.rc.local /etc/rc.local
+sudo echo "/wormbot/master_control_program" >> /etc/rc.local
+sudo echo "exit 0" >> /etc/rc.local
+sudo chmod +x /etc/rc.local
+sudo systemctl enable rc-local.service
+
+
+if $TESTING ;
+then
+	echo testing
+	cp -r test_data/* $ROOT_DIR/experiments
+	sudo echo 1 > $ROOT_DIR/experiments/currexpid.dat
+fi
+
+
+sudo chmod -R +rw $WEB_DIR
+
+sudo cp security/apache2.conf /etc/apache2/apache2.conf 
+sudo service apache2 restart
+
