@@ -1599,7 +1599,7 @@ int main(int argc, char** argv) {
 	ifstream t("var/root_dir");
 	root_dir << t.rdbuf();
 
-	bool skipIntro = false;
+	bool skipIntro = true;
 
 	if (!skipIntro) {
 		raiseBeep(10);
