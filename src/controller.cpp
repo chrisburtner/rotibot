@@ -1658,6 +1658,9 @@ int main(int argc, char** argv) {
 		ardu.SetFlowControl(SerialStreamBuf::FLOW_CONTROL_HARD);
 
 		cout << "Set baud rate 9600 and char size 8 bits\n Waiting for Robot to be ready." << endl;
+
+		sleep(20); //wait for robot to align itself
+
 		sendCommand("M5000,5000");		
 		sendCommand("ZZ");
 		//sendCommand("CC");
