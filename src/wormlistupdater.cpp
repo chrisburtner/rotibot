@@ -581,6 +581,19 @@ int main(int argc,char **argv){
     	  currframe = atoi(string(cgi("currframe")).c_str());
 
 
+		time_t logtime;
+		time(&logtime);
+
+		stringstream logfilename;
+		logfilename << datapath << expID << "/" << logtime << "_updatelog";
+		ofstream logfile(logfilename.str().c_str());
+		
+		logfile << "IP:" << cgi.getEnvironment().getRemoteAddr() << endl;
+		logfile << "USER:" << cgi.getEnvironment().getRemoteUser() << endl;
+		logfile << "HOST:" << cgi.getEnvironment().getRemoteHost() << endl;
+		logfile << "EXPID:" << expID << endl;
+		logfile << "deadworms:" << foo << endl;
+		logfile.close();
 
 	      wormfilename << datapath << expID << "/wormlist.csv";
 	      ofstream wormfile(wormfilename.str().c_str());
@@ -618,6 +631,8 @@ int main(int argc,char **argv){
 
 
 	} catch (exception& e){
+		
+		return (0);
 
 	}//end exception caught
 

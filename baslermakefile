@@ -2,18 +2,25 @@
 CXX = g++
 CFLAGS = -v -g -w -Wall -Wpedantic -O0 -std=c++11
 
+#pylon stuff for basler camera
+PYLON_ROOT ?= /opt/pylon5
+LD         := $(CXX)
+CPPFLAGS   := $(shell $(PYLON_ROOT)/bin/pylon-config --cflags)
+CXXFLAGS   := #e.g., CXXFLAGS=-g -O0 for debugging
+LDFLAGS    := $(shell $(PYLON_ROOT)/bin/pylon-config --libs-rpath)
+LDLIBS     := $(shell $(PYLON_ROOT)/bin/pylon-config --libs)
 
 
 
 OPENCV_LIB = -lopencv_ml -lopencv_objdetect -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videostab -lopencv_calib3d -lopencv_features2d -lopencv_highgui -lopencv_videoio -lopencv_imgcodecs -lopencv_video -lopencv_photo -lopencv_imgproc -lopencv_flann -lopencv_core
 
 # libraries
-LIB = -L/usr/local/lib -lserial -L/usr/lib/x86_64-linux-gnu   
+LIB = -L/usr/local/lib -lserial -L/usr/lib/x86_64-linux-gnu  -L/opt/pylon5/lib64  -lpylonbase -lpylonutility -lGenApi_gcc_v3_1_Basler_pylon_v5_1 -lGCBase_gcc_v3_1_Basler_pylon_v5_1  -Wl,--enable-new-dtags -Wl,-rpath,/opt/pylon5/lib64
 
 # -lcgicc
 
 # includes
-INC = -I/usr/include -I/usr/local/include   #-I/usr/local/include/opencv2 -I/usr/local/include/opencv 
+INC = -I/usr/include -I/usr/local/include -I/opt/pylon5/include   #-I/usr/local/include/opencv2 -I/usr/local/include/opencv 
 
 grab: src/grab.cpp
 	$(CXX) $(CFLAGS) src/grab.cpp $(LIB) $(OPENCV_LIB) -o bin/grab
