@@ -510,7 +510,7 @@ long getFileCreationTime(string filename){
 	struct stat attr;
 	stat(filename.c_str(),&attr);
 	long time = attr.st_mtim.tv_sec;
-	cout << "setframetime:" << time << endl;
+	//cout << "setframetime:" << time << endl;
 	return (time);
 
 }//end getFileCreationTime
