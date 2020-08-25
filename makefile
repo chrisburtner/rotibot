@@ -25,6 +25,9 @@ alignerd: src/alignerd.cpp
 controller: src/controller.cpp
 	$(CXX) $(CFLAGS) src/controller.cpp $(LIB) $(OPENCV_LIB) -o bin/controller
 
+rapidscan: src/rapidscan.cpp
+	$(CXX) $(CFLAGS) src/rapidscan.cpp $(LIB) $(OPENCV_LIB) -o bin/rapidscan
+
 colorpicker: src/colorpicker.cpp
 	$(CXX) $(CFLAGS) src/colorpicker.cpp $(LIB) $(OPENCV_LIB) -o bin/colorpicker
 
@@ -69,7 +72,8 @@ trainingSetExport: src/trainingSetExport.cpp
 	$(CXX) $(CFLAGS) src/trainingSetExport.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/trainingSetExport
 
 
-all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader
+
+all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan
 
 
 
