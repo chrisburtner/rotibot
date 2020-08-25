@@ -67,7 +67,7 @@ using namespace LibSerial;
 
 #define MAX_PLATES 12
 #define MAX_WELLS 12
-#define WELL_WAIT_PERIOD 10  //pause between wells
+#define WELL_WAIT_PERIOD 1  //pause between wells
 #define SCAN_PERIOD (TESTING ? 30 : 0)   // time between scans (default 600sec/10min)
 #define LOAD_WAIT_PERIOD (TESTING ? 20 : 120) // default 120sec/2min
 #define SCAN_COMPLETE_TIMEOUT 1800//maximum time to wait for a scan before resetting robot state 30 min
@@ -97,7 +97,7 @@ using namespace LibSerial;
 #define JITTER_WAIT 500
 #define CALIBRATE_FREQ 200 //number of scans between calibration runs, 144 once per day
 
-#define FRAMECYCLE 50 //sets a number of frames to grab from the camera for each still, often the first frames a garbage as the camera adjusts lighting
+#define FRAMECYCLE 13 //sets a number of frames to grab from the camera for each still, often the first frames a garbage as the camera adjusts lighting
 
 
 
@@ -1797,7 +1797,7 @@ int main(int argc, char** argv) {
 			
 
 			// zero the plotter
-			sendCommand(machineZero);
+		//	sendCommand(machineZero);
 
 			robotstate = ROBOT_STATE_WAIT;
 
