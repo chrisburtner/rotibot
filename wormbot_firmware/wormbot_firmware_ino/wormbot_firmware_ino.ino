@@ -59,7 +59,7 @@
 #define dirPinX 24
 #define ENX 41
 
-#define MINMS 9 //11
+#define MINMS 7 //11
 
 #define NEGATIVE 0
 #define POSITIVE 1
@@ -91,6 +91,9 @@ int tempPin = A1;
 
 bool DEBUGLIMITS=false;
 
+int newmove=false;
+long moveDistance=0;
+long moveCount=0;
 
   /*                                   
 int dirPinX = mePort[PORT_1].s1;//the direction pin connect to Base Board PORT1 SLOT1
@@ -123,9 +126,28 @@ const int numAccelSteps = 1000; // number of steps before reaching top speed 200
 int inverse[numAccelSteps];
 
 
+int getMS(boolean isNew, long dist){
+ //returns MS for smooth acc and decel
+   int wdelay=MINMS;
+   if (isNew){
+     newmove=false;
+     moveDistance=dist;
+     moveCount =0; 
+     
+   }
+   
+   
+   
+   moveCount++;
+   
+  return (wdelay);
+}//end getMS 
+
+
 boolean checkLimit(int switchpin){
   if (!digitalRead(switchpin)) {return true;} else {return false;}
 }//end checklimitswitch
+
 
 
 
@@ -168,7 +190,7 @@ boolean checkAxisLimit(int axis, int adir){
 // *** Functions for initializing distributions ***
 
 void initInverse() {
-  double a = 50000.0;
+  double a = 10000.0;
   double b = 4;
   //double c = a / (numAccelSteps + b) - smallestDelay;
   
@@ -457,6 +479,7 @@ void motion(int motor, long d){
   d=abs(d);
   
   
+  
   switch (motor) {
     
     case TOP:
@@ -568,9 +591,9 @@ void move_to_xy(long x, long y) {
  maxmotorspin=0;
     while(!x_reached && maxmotorspin++ < TIMEOUT_COUNTER) {
       int ms =MINMS;
-      //if (i_x < numAccelSteps)                  ms = inverse[i_x];
-      //else if (i_x > numStepsX - numAccelSteps) ms = inverse[numStepsX - i_x];
-      //else                                      ms = inverse[numAccelSteps - 1];
+      if (i_x < numAccelSteps)                  ms = inverse[i_x];
+      else if (i_x > numStepsX - numAccelSteps) ms = inverse[numStepsX - i_x];
+      else                                      ms = inverse[numAccelSteps - 1];
     
       digitalWrite(stpT, HIGH);
       delayMicroseconds(ms);
@@ -590,9 +613,9 @@ void move_to_xy(long x, long y) {
     maxmotorspin=0;
     while (!y_reached && maxmotorspin++ < TIMEOUT_COUNTER) {
       int ms=MINMS;
-     // if (i_y < numAccelSteps)                  ms = inverse[i_y];
-     // else if (i_y > numStepsY - numAccelSteps) ms = inverse[numStepsY - i_y];
-     // else                                      ms = inverse[numAccelSteps - 1];
+      if (i_y < numAccelSteps)                  ms = inverse[i_y];
+      else if (i_y > numStepsY - numAccelSteps) ms = inverse[numStepsY - i_y];
+      else                                      ms = inverse[numAccelSteps - 1];
     
       digitalWrite(stpL, HIGH);
       delayMicroseconds(ms);
