@@ -50,7 +50,8 @@
 #define CHERRYPIN 6
 
 
-
+#define ACCELSTEPS 500
+#define SLOWSPEED 800.0
 #define TIMEOUT_COUNTER 10000000
 
 
@@ -93,7 +94,8 @@ bool DEBUGLIMITS=false;
 
 int newmove=false;
 long moveDistance=0;
-long moveCount=0;
+long moveDeccel=0;
+float moveSpeed;
 
   /*                                   
 int dirPinX = mePort[PORT_1].s1;//the direction pin connect to Base Board PORT1 SLOT1
@@ -126,22 +128,34 @@ const int numAccelSteps = 1000; // number of steps before reaching top speed 200
 int inverse[numAccelSteps];
 
 
-int getMS(boolean isNew, long dist){
+int setMS(boolean isNew, long dist){
  //returns MS for smooth acc and decel
    int wdelay=MINMS;
    if (isNew){
      newmove=false;
      moveDistance=dist;
-     moveCount =0; 
+     moveDeccel =moveDistance-ACCELSTEPS; 
+     moveSpeed = SLOWSPEED;
      
    }
    
-   
-   
-   moveCount++;
-   
   return (wdelay);
 }//end getMS 
+
+int getMS(long currPos){
+  if (currPos < ACCELSTEPS){
+    
+    moveSpeed= moveSpeed/1.01;
+  }else // end if accel phase
+  if (currPos > moveDeccel){
+      moveSpeed=moveSpeed * 1.01;
+  }//end if decel
+  
+  if (moveSpeed < MINMS) moveSpeed =  MINMS;
+  if (moveSpeed > SLOWSPEED) moveSpeed = SLOWSPEED;
+  return ((int)moveSpeed);
+  
+}//end getMS
 
 
 boolean checkLimit(int switchpin){
@@ -589,18 +603,21 @@ void move_to_xy(long x, long y) {
   digitalWrite(dirR,ydir);
   
  maxmotorspin=0;
+ newmove=true;
+ setMS(newmove,numStepsX);
+ 
     while(!x_reached && maxmotorspin++ < TIMEOUT_COUNTER) {
-      int ms =MINMS;
-      if (i_x < numAccelSteps)                  ms = inverse[i_x];
-      else if (i_x > numStepsX - numAccelSteps) ms = inverse[numStepsX - i_x];
-      else                                      ms = inverse[numAccelSteps - 1];
+      int ms =getMS(i_x);
+      //if (i_x < numAccelSteps)                  ms = inverse[i_x];
+      //else if (i_x > numStepsX - numAccelSteps) ms = inverse[numStepsX - i_x];
+      //else                                      ms = inverse[numAccelSteps - 1];
     
       digitalWrite(stpT, HIGH);
-      delayMicroseconds(ms);
+      delayMicroseconds(MINMS);
       digitalWrite(stpT, LOW);
-      delayMicroseconds(ms);
+      delayMicroseconds(MINMS);
       digitalWrite(stpB, HIGH);
-      delayMicroseconds(ms);
+      delayMicroseconds(MINMS);
       digitalWrite(stpB, LOW);
       delayMicroseconds(ms);
       
@@ -610,19 +627,21 @@ void move_to_xy(long x, long y) {
     
     delay(MINMS);
     
+     newmove=true;
+     setMS(newmove,numStepsY);
     maxmotorspin=0;
     while (!y_reached && maxmotorspin++ < TIMEOUT_COUNTER) {
-      int ms=MINMS;
-      if (i_y < numAccelSteps)                  ms = inverse[i_y];
-      else if (i_y > numStepsY - numAccelSteps) ms = inverse[numStepsY - i_y];
-      else                                      ms = inverse[numAccelSteps - 1];
+      int ms=getMS(i_y);
+      //if (i_y < numAccelSteps)                  ms = inverse[i_y];
+      //else if (i_y > numStepsY - numAccelSteps) ms = inverse[numStepsY - i_y];
+      //else                                      ms = inverse[numAccelSteps - 1];
     
       digitalWrite(stpL, HIGH);
-      delayMicroseconds(ms);
+      delayMicroseconds(MINMS);
        digitalWrite(stpL, LOW);
-       delayMicroseconds(ms);
+       delayMicroseconds(MINMS);
       digitalWrite(stpR, HIGH);
-      delayMicroseconds(ms);
+      delayMicroseconds(MINMS);
       digitalWrite(stpR, LOW);
       delayMicroseconds(ms);
       

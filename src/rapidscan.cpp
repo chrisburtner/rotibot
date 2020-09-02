@@ -1734,10 +1734,10 @@ int main(int argc, char** argv) {
 			scanTimer.startTimer((long) SCAN_PERIOD);			
 
 			if (calibration_counter++ > CALIBRATE_FREQ) {
-				msg = "Calibrating...";
+				msg = "Calibrating...bypassed for rapidscan";
 				cout << msg << endl;
 				writeToLog(msg);
-				sendCommand(String("CC")); //run axis calibration in firmware
+				//sendCommand(String("CC")); //run axis calibration in firmware
 				calibration_counter=0; //reset the counter
 
 
@@ -1797,7 +1797,8 @@ int main(int argc, char** argv) {
 			
 
 			// zero the plotter
-		//	sendCommand(machineZero);
+			//sendCommand("M0,0");
+			//sendCommand(machineZero);
 
 			robotstate = ROBOT_STATE_WAIT;
 
