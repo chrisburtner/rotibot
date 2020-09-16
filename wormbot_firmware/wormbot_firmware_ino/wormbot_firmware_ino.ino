@@ -60,7 +60,7 @@
 #define dirPinX 24
 #define ENX 41
 
-#define MINMS 7 //11
+#define MINMS 3 //11
 
 #define NEGATIVE 0
 #define POSITIVE 1
