@@ -60,6 +60,7 @@ function pad(num) {
 
 var filename = "";      //frame filename
 var img = new Image(); //frame
+var maxskip = 0; //maximum number of consequtive missing frames to skip
 var framenumber=0; //hold the currently displayed frame number
 var expID = 0;
 var lowthresh=0;
@@ -174,17 +175,48 @@ function LoadWormList(){
 
 }//end load wormlist
 
+function getNextGoodFrame() {
+		  shifty=arguments[0];
+                  framenumber=framenumber + shifty;
+	          maxskip+=Math.abs(shifty);		
+		  if (framenumber <0) framenumber=0;
+	          if (framenumber >= totalframes) framenumber =totalframes-1;
 
+                  filename = "/wormbot/" + expID + "/aligned" + pad(framenumber) + ".png";
+                  console.log(filename);
+                  newimg = new Image();
+		  newimg.src = filename;
+                  newimg.onload = function() {
+                        ctx.drawImage(newimg, 0, 0);
+                         };
+ 		  newimg.onerror = function () {
+			        console.log("error filename:" + filename + " width " + newimg.naturalWidth); 
+				if (maxskip < 500) getNextGoodFrame(shifty); 
+		  };
+               
+
+}//end getnextgoodframe
 
 function LoadFrame(){
 	if (framenumber <0) framenumber=0;
-	if (framenumber >999999) framenumber =999999;
+	if (framenumber >totalframes) framenumber =totalframes=1;
+	shifty=arguments[0];
         filename = "/wormbot/" + expID + "/aligned" + pad(framenumber) + ".png";
         img.src = filename;
-	img.onload = function() {
-                ctx.drawImage(img, 0, 0);
-                };
+	img.onload = function(e) {
+		console.log("frame" + framenumber + " width" + img.width + " height" + img.height + " shift" + shifty); 
+                
+ 		if (img.complete == true && img.naturalWidth != 0) {
+                    ctx.drawImage(img, 0, 0);
 
+        	}
+	};
+
+	img.onerror = function() { 
+			maxskip=0; //reset the skip counter
+			console.log("img error"); 
+			getNextGoodFrame(shifty);
+			};
 	getCurrTemp();
         drawRects();
 	drawDeadworms();
@@ -205,7 +237,7 @@ document.onkeydown = function (e) {
 		console.log("arrowup");
 		framenumber+=10;
 		if (framenumber >= totalframes) framenumber = totalframes-1;
-		LoadFrame();
+		LoadFrame(10);
             // up arrow
             break;
         case 'ArrowDown':
@@ -214,14 +246,14 @@ document.onkeydown = function (e) {
 		console.log("arrowdwn");
 		framenumber-=10;
 		if (framenumber < 0) framenumber =0;
-		LoadFrame();
+		LoadFrame(-10);
             break;
         case 'ArrowLeft':
             // left arrow
 		e.preventDefault();
 		framenumber--;
 		if (framenumber < 0) framenumber =0;
-		LoadFrame();
+		LoadFrame(-1);
 		console.log("arrowLeft");
 
             break;
@@ -230,7 +262,7 @@ document.onkeydown = function (e) {
 		e.preventDefault();
 		framenumber++;
 		if (framenumber >= totalframes) framenumber = totalframes-1;
-		LoadFrame();
+		LoadFrame(1);
 		console.log("arrowright");
 		
     }
@@ -249,7 +281,7 @@ function getLastFile(){
 				totalframes=framenumber;
 				console.log("last frame is: " + framenumber);
 				framenumber = framenumber-1; //off by one
-				LoadFrame();
+				LoadFrame(-1);
 
 				return lines[6];
     			}

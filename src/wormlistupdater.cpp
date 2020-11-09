@@ -403,7 +403,7 @@ long getLifespan(string filename, long frametime){
 
 long getFileCreationTime(string filename){
 	struct stat attr;
-	stat(filename.c_str(),&attr);
+	if (stat(filename.c_str(),&attr) == -1) return (-1); //if file not found return -1
 	long time = attr.st_mtim.tv_sec;
 
 	return (time);
@@ -424,6 +424,7 @@ float getAgeinDays(int framenum){
 		number << setfill('0') << setw(6) << framenum;
 		ss << fulldirectory << "frame" << number.str() <<".png";
 		frametime = getFileCreationTime(ss.str());
+		if (frametime == -1) return (-1); //if file not found
 		ss.str("");
 		ss << fulldirectory << "description.txt";
 	return(((float)(getLifespan(ss.str(),frametime)))/86400.0f);
@@ -443,6 +444,7 @@ int getAgeinMinutes(int framenum){
 		ss << fulldirectory << "frame" << number.str() <<".png";
 		//debugger << ss.str() << ",";
 		frametime = getFileCreationTime(ss.str());
+		if (frametime == -1) return (-1);  //if file not found
 		//debugger << "frametime: " << frametime;
 		ss.str("");
 		ss << fulldirectory << "description.txt";
@@ -613,7 +615,10 @@ int main(int argc,char **argv){
 
 
 		  BOOST_FOREACH(const ptree::value_type &v, pt.get_child("")) {
-
+			  
+			//check to see if the frame exists
+			if (getAgeinDays(v.second.get<int>("deathframe")) == -1) continue; //skip the invalid worm
+			  
 		      	  wormfile  <<  v.second.get<int>("x") << ",";
 		      	  wormfile <<  v.second.get<int>("y") << ",";
 		      	  wormfile  <<  v.second.get<int>("deathframe") << ",";
