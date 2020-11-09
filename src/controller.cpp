@@ -22,6 +22,7 @@
 #include <boost/algorithm/string.hpp> 
 #include <boost/lexical_cast.hpp>
 
+
 #include <fstream>
 #include <iomanip>
 #include <cstdio>
@@ -35,6 +36,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/statvfs.h>
 
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.hpp>
@@ -79,6 +81,7 @@ using namespace LibSerial;
 #define ROBOT_STATE_SCANNING 1
 #define ROBOT_STATE_WAIT 2
 #define ROBOT_STATE_LOAD 3
+#define ROBOT_STATE_DISK_FULL 4
 
 #define MONITOR_STATE_OFF -1 // experimenter doesn't want monitoring
 #define MONITOR_STATE_START -2 // experimenter requests monitoring
@@ -87,6 +90,10 @@ using namespace LibSerial;
 
 #define SECONDS_IN_DAY 86400
 #define SECONDS_IN_HOUR 3600
+
+#define MAX_DRIVE_USAGE 95 //maximum percent disk space to tolerate before pausing the controller and 
+#define DRIVE_USAGE_WARNING_THRESHOLD 85 //threshold for warning emails
+#define WARNING_FREQUENCY 12 //how often to send the warning emails
 
 //defines for frame counter flags
 #define BRIGHTFIELD 1
@@ -1255,6 +1262,32 @@ int setupPylonCamera(void){
 
 */
 
+
+int checkDiskFull(void){
+
+	   struct statvfs mystats;
+	   
+
+	   statvfs(datapath.c_str(), &mystats);
+
+	   unsigned long long totalblocks = mystats.f_blocks * mystats.f_bsize;
+	   unsigned long long freeblocks = mystats.f_bavail * mystats.f_bsize;
+	   
+	    	
+	   float pfree = ((mystats.f_blocks - mystats.f_bavail) / (double)(mystats.f_blocks) * 100.0);
+	   cout << "total:" << totalblocks << " free:" << freeblocks << " pfree:" << pfree << endl; 
+	   
+		
+	   string msg = "Drive space remaining:";
+	   cout << msg << (int)pfree << endl; 
+
+
+	return 0;
+
+
+
+}//end check disk full
+
 // Scan through experiments and capture pictures
 void scanExperiments(void) {
 	stringstream cmd("");
@@ -1634,6 +1667,8 @@ int main(int argc, char** argv) {
 	camera = setupCamera(camconfigFilename);
 	cameranum = boost::lexical_cast<int>(camera[camera.length() - 1]);
 	cout << "camera number:" << cameranum << " " << camera << endl;
+
+	checkDiskFull();
 	
 	//cout << "Init Pylon runtime" << endl;
 	//PylonInitialize();
@@ -1816,6 +1851,13 @@ int main(int argc, char** argv) {
 			updated = checkJoblistUpdate();
 
 			syncWithJoblist();
+			if (checkDiskFull()){
+				msg= "WARNING DRIVE FULL";
+				cout << msg << endl;
+				writeToLog(msg);
+				robotstate = ROBOT_STATE_DISK_FULL;
+				break; 
+			}//end checkDisk
 
 			// Check joblist for updates
 			if (updated) {
@@ -1830,6 +1872,12 @@ int main(int argc, char** argv) {
 
 			break; //end state wait
 
+		//if drive is full
+		case ROBOT_STATE_DISK_FULL:
+			
+		
+			break;
+			//end if full
 
 		// Wait for experimenter to load/unload plates
 		case ROBOT_STATE_LOAD:
