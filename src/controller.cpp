@@ -91,9 +91,9 @@ using namespace LibSerial;
 #define SECONDS_IN_DAY 86400
 #define SECONDS_IN_HOUR 3600
 
-#define MAX_DRIVE_USAGE 95 //maximum percent disk space to tolerate before pausing the controller and 
-#define DRIVE_USAGE_WARNING_THRESHOLD 85 //threshold for warning emails
-#define WARNING_FREQUENCY 12 //how often to send the warning emails
+#define MAX_DISK_USAGE 95 //maximum percent disk space to tolerate before pausing the controller and 
+#define DISK_USAGE_WARNING_THRESHOLD 90 //threshold for warning emails
+#define DISK_WARNING_FREQ 12 //how often to send the warning emails
 
 //defines for frame counter flags
 #define BRIGHTFIELD 1
@@ -115,6 +115,7 @@ stringstream root_dir;
 SerialStream ardu;
 string datapath;
 int cameranum=0;
+int sendwarning =0;
 string logfilename = datapath + "/robot.log";
 ofstream logfile(logfilename.c_str(), ofstream::app);
 streambuf *coutbuf = std::cout.rdbuf(); //save old buf
@@ -1260,7 +1261,69 @@ int setupPylonCamera(void){
 	}//end exception caught
 }//end setupPylonCamera
 
-*/
+*/ 
+
+void sendEmail(string emailaddress, string mailsubject, string messagebody){
+	stringstream cmdline;
+	cmdline << "echo \"" << messagebody << "\" | mail -s '" << mailsubject << "' -aFrom:wormbot@wormbot.org " << emailaddress << endl;
+	cout << cmdline.str() << endl;
+	system(cmdline.str().c_str());
+ 
+}//end send 
+
+void sendDiskWarning(int pfull, int maxfull){
+
+	vector <string> emaillist;
+	for (vector<Well*>::iterator citer = wells.begin(); citer != wells.end(); citer++) {
+			
+			Well* thisWell = *citer;
+			if (thisWell->status == WELL_STATE_ACTIVE ) {
+				emaillist.push_back(thisWell->email);
+			}//end if active
+	}//end for each
+
+	std::sort(emaillist.begin(), emaillist.end());
+        emaillist.erase(std::unique(emaillist.begin(), emaillist.end()), emaillist.end());
+
+	stringstream emailmessage;
+
+	emailmessage << "Good day.\n I'm sorry to trouble you but this message is to notify you that there has been a fault in your WormBot system.  The hard drive holding your WormBot data is " << pfull << "% full. If the system reaches " << maxfull << "% full, your WormBot system will shutdown until you increase the free space on the system. I hope you have a pleasent day.\n Sincerely yours,\n WormBot" << endl;  
+	
+	for (vector<string>::iterator citer = emaillist.begin(); citer != emaillist.end(); citer++) {
+		cout << "email:" << *citer <<endl;
+	        sendEmail(*citer, "ALERT: YOUR WORMBOT IS NEARLY FULL", emailmessage.str());
+	}//end for each emaillist
+				
+
+
+	
+}//end sendDiskWarning
+
+void sendDiskFull(int pfull, int maxfull){
+
+	vector <string> emaillist;
+	for (vector<Well*>::iterator citer = wells.begin(); citer != wells.end(); citer++) {
+			
+			Well* thisWell = *citer;
+			if (thisWell->status == WELL_STATE_ACTIVE ) {
+				emaillist.push_back(thisWell->email);
+			}//end if active
+	}//end for each
+
+	std::sort(emaillist.begin(), emaillist.end());
+        emaillist.erase(std::unique(emaillist.begin(), emaillist.end()), emaillist.end());
+
+	stringstream emailmessage;
+
+	emailmessage << "Good day.\n I'm sorry to trouble you but this message is to notify you that there has been a fault in your WormBot system.  The hard drive holding your WormBot data is " << pfull << "% full. This is greater than the " << maxfull << "% threshold to insure your system runs without error. Your WormBot system has now paused data collection until you increase the free space on the system. I hope you have a pleasent day.\n Sincerely yours,\n WormBot" << endl;  
+	
+	for (vector<string>::iterator citer = emaillist.begin(); citer != emaillist.end(); citer++) {
+		cout << "email:" << *citer <<endl;
+	        sendEmail(*citer, "ALERT: YOUR WORMBOT IS FULL, EXPERIMENTS PAUSED", emailmessage.str());
+	}//end for each emaillist
+
+
+}//end sendDIskFull
 
 
 int checkDiskFull(void){
@@ -1281,8 +1344,17 @@ int checkDiskFull(void){
 	   string msg = "Drive space remaining:";
 	   cout << msg << (int)pfree << endl; 
 
+	   int percentfree = pfree;
+	 	
+	   if (percentfree >= DISK_USAGE_WARNING_THRESHOLD) {
+		if (sendwarning ==0) sendDiskWarning(percentfree, MAX_DISK_USAGE);
+		if (sendwarning++ > DISK_WARNING_FREQ) sendwarning=0;  
+	   }//send email warning periodically
 
-	return 0;
+	   if (percentfree >  MAX_DISK_USAGE) {
+		sendDiskFull(percentfree, MAX_DISK_USAGE);
+		return 1; 
+		}else return 0;
 
 
 
@@ -1668,7 +1740,7 @@ int main(int argc, char** argv) {
 	cameranum = boost::lexical_cast<int>(camera[camera.length() - 1]);
 	cout << "camera number:" << cameranum << " " << camera << endl;
 
-	checkDiskFull();
+	
 	
 	//cout << "Init Pylon runtime" << endl;
 	//PylonInitialize();
@@ -1743,13 +1815,15 @@ int main(int argc, char** argv) {
 	writeToLog(msg);
 
 	syncWithJoblist(true);
-	
+
+	checkDiskFull();
 
 
 	// ***ROBOT STATE MACHINE***
 
 	Timer loadTimer((long)0);
 	Timer scanTimer((long)0);
+	Timer fullTimer((long)0);
 	int robotstate = ROBOT_STATE_SCANNING;
 	bool updated = false;
 
@@ -1874,7 +1948,12 @@ int main(int argc, char** argv) {
 
 		//if drive is full
 		case ROBOT_STATE_DISK_FULL:
-			
+			while(checkDiskFull()){
+				fullTimer.startTimer((long)SCAN_PERIOD);
+
+				while(!fullTimer.checkTimer()){} //wait until timer expires
+			}//end while full
+			robotstate = ROBOT_STATE_SCANNING;
 		
 			break;
 			//end if full

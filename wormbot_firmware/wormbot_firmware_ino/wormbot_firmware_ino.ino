@@ -828,8 +828,13 @@ void setup() {
 }//end setup
 
 void readTemp(void){
-  int volts = analogRead(tempPin);
-  float mvlt= (volts/1024.000) * 5000.000;
+  long volts; 
+  for (int i=0; i < 99; i++) {
+    volts+= analogRead(tempPin);
+  }
+  float aveVolt = (float)volts / 100.000;
+  
+  float mvlt= (aveVolt/1024.000) * 5000.000;
   float ten=10.000;
   float f= mvlt/ten;
 
