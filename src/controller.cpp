@@ -94,6 +94,7 @@ using namespace LibSerial;
 #define MAX_DISK_USAGE 95 //maximum percent disk space to tolerate before pausing the controller and 
 #define DISK_USAGE_WARNING_THRESHOLD 90 //threshold for warning emails
 #define DISK_WARNING_FREQ 12 //how often to send the warning emails
+#define STATUS_UPDATE_FREQ 143 //how often to send update emails
 
 //defines for frame counter flags
 #define BRIGHTFIELD 1
@@ -115,7 +116,8 @@ stringstream root_dir;
 SerialStream ardu;
 string datapath;
 int cameranum=0;
-int sendwarning =0;
+int sendwarning =0; //email warning counter
+int sendstatus = 0; //email update counter
 string logfilename = datapath + "/robot.log";
 ofstream logfile(logfilename.c_str(), ofstream::app);
 streambuf *coutbuf = std::cout.rdbuf(); //save old buf
@@ -249,7 +251,32 @@ void setCherry(int intensity);
 string setupCamera(string filename);
 
 
+class UserStatus {
 
+public:
+
+	string email;
+	string explist;
+
+	UserStatus(void){
+		
+	}//end constructor
+
+	void addEmail(string mail){
+		email = mail;
+	}
+
+	void addExperiment(long expid, string title, long frame){
+		stringstream mss;
+		mss << "exp:" << expid << "," << title << ",currframe:" << frame << endl;
+		explist = explist + mss.str();
+	}//end addExperiment
+
+	string getExperiments(void){
+	 	return explist;
+	}
+
+};//end userstatus
 
 class Timer {
 public:
@@ -1271,6 +1298,71 @@ void sendEmail(string emailaddress, string mailsubject, string messagebody){
  
 }//end send 
 
+
+
+void sendExperimentStatus(void){
+
+	//build email list
+
+	vector <string> emaillist;
+	vector <UserStatus> userlist;
+
+	for (vector<Well*>::iterator citer = wells.begin(); citer != wells.end(); citer++) {
+			
+			Well* thisWell = *citer;
+			if (thisWell->status == WELL_STATE_ACTIVE ) {
+				emaillist.push_back(thisWell->email);
+			}//end if active
+	}//end for each
+
+	//condense email list
+	std::sort(emaillist.begin(), emaillist.end());
+        emaillist.erase(std::unique(emaillist.begin(), emaillist.end()), emaillist.end());
+
+	stringstream expStatusList;
+
+	for (vector<string>::iterator citer = emaillist.begin(); citer != emaillist.end(); citer++) {
+		UserStatus thisuser;
+		thisuser.addEmail((*citer));
+		userlist.push_back(thisuser);
+		
+	}//end for each email address
+
+	
+	for (vector<Well*>::iterator citer = wells.begin(); citer != wells.end(); citer++) {
+			
+			Well* thisWell = *citer;
+			if (thisWell->status == WELL_STATE_ACTIVE ) {
+				for (vector<UserStatus>::iterator liter = userlist.begin(); liter != userlist.end(); liter++) {
+					if ((*liter).email == thisWell->email) {
+						(*liter).addExperiment(thisWell->expID,thisWell->title,thisWell->currentframe);
+
+					}//end if belongs to user add it
+				}//end for each user
+			}//end if active
+	}//end for each well
+
+	stringstream emailmessage;
+
+	emailmessage << "Good day.\n I'm functioning properly and I would like to give you an update on the experiments you have running on my system.  Your experiments are listed below.\n Sincerely yours,\n WormBot" << endl;  
+       
+	for (vector<UserStatus>::iterator citer = userlist.begin(); citer != userlist.end(); citer++) {
+		cout << "email:" << (*citer).email << "list:" << (*citer).getExperiments() <<endl;
+	        sendEmail((*citer).email, "WormBot Daily Status Update", emailmessage.str() + (*citer).getExperiments());
+	}//end for each emaillist
+
+
+}//end send experiment status
+
+void statusUpdate(void){
+	if (sendstatus++ > STATUS_UPDATE_FREQ) {
+		sendExperimentStatus();
+		sendstatus = 0; //reset the counter
+	}//end if time to send
+	
+}//end statusUpdate
+
+
 void sendDiskWarning(int pfull, int maxfull){
 
 	vector <string> emaillist;
@@ -1817,6 +1909,7 @@ int main(int argc, char** argv) {
 	syncWithJoblist(true);
 
 	checkDiskFull();
+	sendExperimentStatus();
 
 
 	// ***ROBOT STATE MACHINE***
@@ -1925,6 +2018,8 @@ int main(int argc, char** argv) {
 			updated = checkJoblistUpdate();
 
 			syncWithJoblist();
+
+			statusUpdate();
 			if (checkDiskFull()){
 				msg= "WARNING DRIVE FULL";
 				cout << msg << endl;
