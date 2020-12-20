@@ -94,7 +94,7 @@ using namespace LibSerial;
 #define MAX_DISK_USAGE 95 //maximum percent disk space to tolerate before pausing the controller and 
 #define DISK_USAGE_WARNING_THRESHOLD 90 //threshold for warning emails
 #define DISK_WARNING_FREQ 12 //how often to send the warning emails
-#define STATUS_UPDATE_FREQ 143 //how often to send update emails
+#define STATUS_UPDATE_FREQ 142 //how often to send update emails
 
 //defines for frame counter flags
 #define BRIGHTFIELD 1
