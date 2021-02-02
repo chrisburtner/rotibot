@@ -779,6 +779,7 @@ void quickCalibrate(void){
 
 void setup() {
   
+  analogReference(INTERNAL1V1);
   
   // initialize the serial port:
   Serial.begin(9600);
@@ -829,16 +830,21 @@ void setup() {
 
 void readTemp(void){
   long volts; 
-  for (int i=0; i < 99; i++) {
+  int i=0;
+  for (i=0; i < 999; i++) {
     volts+= analogRead(tempPin);
+    //Serial.println(analogRead(tempPin));
   }
-  float aveVolt = (float)volts / 100.000;
+  //Serial.print("AVE");
+  float aveVolt = (float)volts / 1000.000;
+  //Serial.println(aveVolt);
   
-  float mvlt= (aveVolt/1024.000) * 5000.000;
+  float mvlt= (aveVolt* 1100.000) / 1024.000;
   float ten=10.000;
   float f= mvlt/ten;
 
-float c= (f - 32.000) * (0.55555555556);
+float c= (f - 32.000)/1.8000;
+//c+=4.000; //calibration 1-31-2021
 
 Serial.print ("C*");
 Serial.println(c);
