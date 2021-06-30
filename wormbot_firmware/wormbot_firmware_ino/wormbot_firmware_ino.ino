@@ -48,6 +48,7 @@
 #define LAMPPIN 2
 #define GFPPIN 4
 #define CHERRYPIN 6
+#define UVPIN 8
 
 
 #define ACCELSTEPS 500
@@ -87,6 +88,7 @@ unsigned long maxmotorspin=0;
 int lampPin = LAMPPIN; 
 int gfpPin = GFPPIN;
 int cherryPin = CHERRYPIN;
+int uvPin = UVPIN;
 
 int tempPin = A1; 
 
@@ -725,6 +727,14 @@ void setCherry(int intensity){
   
 }//end setLamp
 
+void setUV(int intensity){
+  //if (intensity >= 99) digitalWrite(lampPin, HIGH);
+ // if (intensity <= 0) digitalWrite(lampPin,LOW);
+   analogWrite(uvPin, intensity);
+  
+  
+}//end setLamp
+
 /* //june11
 
 void newMachineMax(void){
@@ -799,6 +809,7 @@ void setup() {
   pinMode(lampPin, OUTPUT);
    pinMode(gfpPin, OUTPUT);
     pinMode(cherryPin, OUTPUT);
+    pinMode(uvPin, OUTPUT);
   
  
   //setup limit switches
@@ -924,6 +935,12 @@ void loop(){
         String lightamount = inputString.substring(inputString.indexOf("CL")+2);
         int lumos = lightamount.toInt();
         setCherry(lumos);
+        
+    } else
+    if (inputString.indexOf("UL") >=0){
+        String lightamount = inputString.substring(inputString.indexOf("UL")+2);
+        int lumos = lightamount.toInt();
+        setUV(lumos);
         
     } else
     if (inputString.indexOf("P")>=0){ 
