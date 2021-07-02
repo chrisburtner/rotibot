@@ -48,7 +48,7 @@
 #define LAMPPIN 2
 #define GFPPIN 4
 #define CHERRYPIN 6
-#define UVPIN 8
+#define UVPIN 7
 
 
 #define ACCELSTEPS 500

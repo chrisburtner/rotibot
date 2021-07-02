@@ -47,6 +47,7 @@ sudo chmod a+rw $ROOT_DIR/RRRjoblist.csv
 
 # move necessary files to root dir
 sudo cp camera.config experimentuploader.html bulkuploader.html graphmaker.html platecoordinates.dat generate_coordinates.py bin/alignerd bin/controller wormbot_template.csv bin/master_control_program security/.htpasswd $ROOT_DIR
+sudo cp -R scheduler_parts $ROOT_DIR
 sudo echo 0 > $ROOT_DIR/currexpid.dat
 sudo chmod a+rw $ROOT_DIR/currexpid.dat
 

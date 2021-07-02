@@ -47,6 +47,9 @@ marker: src/marker.cpp
 scheduler: src/scheduler.cpp
 	$(CXX) $(CFLAGS) src/scheduler.cpp -lcgicc -o bin/scheduler
 
+newscheduler: src/newScheduler.cpp
+	$(CXX) $(CFLAGS) src/newScheduler.cpp -lcgicc -o bin/newscheduler
+
 bulkuploader: src/bulkuploadMini.cpp
 	$(CXX) $(CFLAGS) src/bulkuploadMini.cpp -lcgicc -o bin/bulkuploader
 
