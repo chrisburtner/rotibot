@@ -42,7 +42,11 @@
 #include <opencv/cv.hpp>
 #include <opencv2/videoio.hpp>
 
-//#include <pylon/PylonIncludes.h>
+
+#include <pylon/PylonIncludes.h>
+#include <GenApi/GenApi.h>;
+#include <pylon/BaslerUniversalInstantCamera.h>
+
 
 
 #include "constants.h"
@@ -56,11 +60,13 @@ uint8_t *buffer;
 
 using namespace std;
 using namespace LibSerial;
-//using namespace Pylon;
-
+using namespace Pylon;
+using namespace GenApi;
 
 
 #define TESTING false // speeds up process for faster debugging
+
+#define ZAXIS false // if there is a Z Axis for focusing
 
 #define BLANKUPDATE ",,,,,,,"
 
@@ -100,12 +106,33 @@ using namespace LibSerial;
 #define BRIGHTFIELD 1
 #define GFP 2
 #define CHERRY 3
+#define UV 4
+#define BLIND 5
+
+#define CAPTURE_BF 0
+#define CAPTURE_GFP 1
+#define CAPTURE_CHERRY 2
+#define CAPTURE_UV 3
+
+#define DEFAULT_EXPOSURE 15000
 
 #define ACCEPTABLE_JITTER 2
 #define JITTER_WAIT 500
 #define CALIBRATE_FREQ 200 //number of scans between calibration runs, 144 once per day
 
 #define FRAMECYCLE 50 //sets a number of frames to grab from the camera for each still, often the first frames a garbage as the camera adjusts lighting
+
+//focus params
+#define NEGATIVE 0
+#define POSITIVE 1
+#define WINDOWSIZE 10
+#define STARTSTEPS 128
+
+//gain params
+#define DEFAULT_GAIN 10.0f
+#define GFP_GAIN 25.0f
+#define UV_GAIN 25.0f
+#define CHERRY_GAIN 25.0f
 
 
 
@@ -121,7 +148,7 @@ int sendstatus = 0; //email update counter
 string logfilename = datapath + "/robot.log";
 ofstream logfile(logfilename.c_str(), ofstream::app);
 streambuf *coutbuf = std::cout.rdbuf(); //save old buf
-string VERSION = "Release 1.03";
+string VERSION = "Release 2.01";
 
 //pylon stuff
 /*
@@ -385,6 +412,32 @@ public:
 
 };
 
+class FocusReading{
+
+	public:
+
+
+	long x,y,z;
+	double focus;
+
+	FocusReading(void){
+		x,y,z=0;
+		focus=-1;
+	}//end constructor
+
+	FocusReading( long pz , double pfocus){
+		z=pz;
+		focus = pfocus;
+	}//end cons
+
+
+};//end class focus reading
+
+bool FocusSort(FocusReading const& left, FocusReading const& right) {
+    if (left.focus != right.focus)
+        return left.focus < right.focus;
+    
+}//end focus sort
 
 class Well {
 public:
@@ -405,11 +458,13 @@ public:
 	long expID;
 	long xval;
 	long yval;
+	long zval; //store the last focal plane
 	int plate;
 	int rank;
 	bool transActive;
-	int activeGFP;
-	int activeCherry; 
+	long activeGFP;
+	long activeCherry;
+	long activeUV; 
 	bool timelapseActive;
 	int monitorSlot;
 	string wellname;
@@ -448,9 +503,11 @@ public:
 		getline(ss, token, ',');
 		monitorSlot = atoi(token.c_str());
 		getline(ss, token, ',');
-		activeGFP = atoi(token.c_str());
+		activeUV = atol(token.c_str());
 		getline(ss, token, ',');
-		activeCherry = atoi(token.c_str());
+		activeGFP = atol(token.c_str());
+		getline(ss, token, ',');
+		activeCherry = atol(token.c_str());
 		getline(ss, email, ',');
 		getline(ss, investigator, ',');
 		getline(ss, title, ',');
@@ -546,7 +603,7 @@ public:
     	ss << expID << "," << status << "," << plate << "," << wellname << "," << xval
 				<< "," << yval<< "," << directory
     			<< "," << timelapseActive << "," << monitorSlot << "," <<
-			activeGFP << "," << activeCherry << "," 
+			activeUV << "," << activeGFP << "," << activeCherry << "," 
 			<< email
     			<< "," << investigator << "," << title << "," << description << "," << startingN
 				<< "," << startingAge << "," << strain
@@ -613,6 +670,7 @@ public:
 		ofile << wellname << endl;
 		ofile << activeGFP << endl;
 		ofile << activeCherry << endl;
+		ofile << activeUV << endl;
 		ofile << "****************************************************************\n";
 		ofile << "::br::" << endl;
 		ofile.close();
@@ -655,10 +713,20 @@ public:
 
 	int incrementFrame(int SOURCEFLAG){
 	//code determines when to implement the frame counter
+
+		if (SOURCEFLAG == BLIND) {
+			currentframe++;
+			return(1);
+		}//end if auto inc
 	
-		if (SOURCEFLAG == BRIGHTFIELD && !activeGFP && !activeCherry){
+		if (SOURCEFLAG == BRIGHTFIELD && !activeGFP && !activeCherry && !activeUV){
 		currentframe++;
 		return(1);
+		}
+
+		if (SOURCEFLAG == UV && !activeCherry && !activeGFP){
+			currentframe++;
+			return(1);		
 		}
 
 		if (SOURCEFLAG == GFP && !activeCherry){
@@ -708,6 +776,42 @@ public:
 		
 		
 	}//end recordTemp
+
+	long getExposure(int chan){
+
+		switch(chan) {
+			case CAPTURE_BF:
+				return DEFAULT_EXPOSURE;
+			case CAPTURE_GFP:
+				return activeGFP;
+			case CAPTURE_UV:
+				return activeUV;
+			case CAPTURE_CHERRY:
+				return activeCherry;
+	
+		}//end switch
+		return DEFAULT_EXPOSURE;
+
+
+	}//end getExposure
+
+	float getGain(int chan){
+
+		switch(chan) {
+			case CAPTURE_BF:
+				return DEFAULT_GAIN;
+			case CAPTURE_GFP:
+				return GFP_GAIN;
+			case CAPTURE_UV:
+				return UV_GAIN;
+			case CAPTURE_CHERRY:
+				return CHERRY_GAIN;
+	
+		}//end switch
+		return DEFAULT_EXPOSURE;
+
+
+	}//end getgain
 
 	int capture_frame(int doAlign){
 
@@ -880,7 +984,7 @@ public:
 
 			
 
-			incrementFrame(BRIGHTFIELD);
+			//incrementFrame(BRIGHTFIELD);
 			cap.release();
 		} catch (cv::Exception ex) {
 			cout << " frame was bad! try again" << endl;
@@ -955,7 +1059,7 @@ public:
 			cvtColor(frame, frame_gray, CV_BGR2GRAY); //make it gray
 
 			imwrite(gfpFilename.str(), frame_gray, compression_params); //frame vs frame_gray
-			incrementFrame(GFP);
+			//incrementFrame(GFP);
 
 		} catch (cv::Exception ex) {
 			cout << " GFPframe was bad! try again" << endl;
@@ -968,13 +1072,533 @@ public:
 
 	int capture_Cherry(int doaligner){
 		try {
-			incrementFrame(CHERRY);
+			//incrementFrame(CHERRY);
 		} catch (cv::Exception ex) {
 			cout << " cherryframe was bad! try again" << endl;
 			return (0);
 		} //end caught exception trying to load
 
 	}//end captureCherry
+
+	
+	int capture_UV(int doaligner){
+		try {
+			//incrementFrame(UV);
+		} catch (cv::Exception ex) {
+			cout << " UVframe was bad! try again" << endl;
+			return (0);
+		} //end caught exception trying to load
+
+	}//end captureUV
+
+
+		
+	double getFocusMeasure(void){
+		
+
+			// Number of images to be grabbed.
+			static const uint32_t c_countOfImagesToGrab = 1;
+			int gotit = 0;
+
+			
+
+			  try
+			    {
+						
+				// Create an instant camera object with the camera device found first.
+				//CInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice());
+				CBaslerUniversalInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice() );
+				INodeMap& nodemap = camera.GetNodeMap();
+				camera.Open();
+		
+	       // Set the AOI:
+
+	       // Get the integer nodes describing the AOI.
+		CIntegerParameter offsetX( nodemap, "OffsetX" );
+		CIntegerParameter offsetY( nodemap, "OffsetY" );
+		CIntegerParameter width( nodemap, "Width" );
+		CIntegerParameter height( nodemap, "Height" );
+		CFloatParameter exposure(nodemap, "ExposureTime");
+		CFloatParameter gamma(nodemap, "Gamma");
+
+		
+		exposure.SetValue(340.0);
+		gamma.SetValue(0.55);
+	       
+
+			
+				// The parameter MaxNumBuffer can be used to control the count of buffers
+				// allocated for grabbing. The default value of this parameter is 10.
+				camera.MaxNumBuffer = 5;
+
+				
+
+
+				// Start the grabbing of c_countOfImagesToGrab images.
+				// The camera device is parameterized with a default configuration which
+				// sets up free-running continuous acquisition.
+				camera.StartGrabbing( c_countOfImagesToGrab);
+
+				// This smart pointer will receive the grab result data.
+				CGrabResultPtr ptrGrabResult;
+
+				// Camera.StopGrabbing() is called automatically by the RetrieveResult() method
+				// when c_countOfImagesToGrab images have been retrieved.
+
+				bool infocus = false;
+				int focuscounter = 0;
+
+				while ( !gotit )
+				{
+					
+				    // Wait for an image and then retrieve it. A timeout of 100 ms is used.
+				    camera.RetrieveResult( 5000, ptrGrabResult, TimeoutHandling_ThrowException);
+
+				    // Image grabbed successfully?
+				    if (ptrGrabResult->GrabSucceeded())
+				    {
+					
+					const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+					
+					
+					gotit++;
+					
+					//convert ptrGRab to CV Mat
+					CPylonImage target;
+					Mat dst;
+
+					    CImageFormatConverter converter;
+					    converter.OutputPixelFormat=PixelType_Mono8;
+					    //converter.OutputBitAlignment=OutputBitAlignment_MsbAligned;
+
+					    converter.Convert(target,ptrGrabResult);
+
+					    Mat src_gray(target.GetHeight(),target.GetWidth(),CV_8UC1,target.GetBuffer(),Mat::AUTO_STEP);
+					  
+
+					    if(src_gray.empty())
+					    {
+						cout << "Nope" << endl;
+						return -1;
+					    }
+					    
+
+					//just use the center of the image
+					Rect roi(2236, 1324, 1000, 1000);
+					Mat cropped(src_gray, roi);
+					
+					//compute focus lap var
+					int kernel_size = 11;
+					int scale = 1;
+					int delta = 0;
+					Laplacian(cropped, dst, CV_64F,kernel_size,scale, delta);
+					Scalar mu, sigma;
+					meanStdDev(dst, mu, sigma);
+					double focusMeasure = sigma.val[0] * sigma.val[0];
+					cout << u8"\033[2J\033[1;1H"; 
+					cout << "focus lapVar = :" << focusMeasure << endl;
+					return (focusMeasure);
+					
+
+				    }
+				    else
+				    {
+					cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
+					return -1;
+				    }
+					
+				}//end while
+			    }
+			    catch (const GenericException &e)
+			    {
+				// Error handling.
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+				return -1;
+				
+			    }
+
+	}//end getfocusmeasure
+
+
+	long focusCamera(void){
+
+		int zdir = NEGATIVE;
+		vector <double> focusvalues;
+		vector <long> zvals; 
+		vector <FocusReading> foci;
+		vector <FocusReading> ffoci;
+		int zstepsize = STARTSTEPS;
+		int zwindow = WINDOWSIZE;
+		long zstart = zval - ((zwindow * zstepsize)/2); 
+
+
+		//gotowell goes to current Z value, grab images and measure focus around current Z
+		//set to max defocus the scan through previous focal point
+
+		stringstream cmd("");
+		cmd << "M" << xval << "," << yval << "," << zstart;
+		sendCommand(cmd.str());
+		cmd.str("");
+		
+		//coarse focus
+		for (int i=0; i < zwindow; i++){
+		
+			long znext = zstart + (i * zstepsize);
+			cmd << "M" << xval << "," << yval << "," << znext;
+			sendCommand(cmd.str());
+			cmd.str("");
+			FocusReading thispoint;
+			thispoint.z = znext;
+			thispoint.focus= getFocusMeasure();
+			foci.push_back(thispoint);
+			
+
+			cout << thispoint.z << "," << thispoint.focus << endl;
+			
+		
+
+		}//end for each image
+
+
+		zstepsize=16; //0.5 of actual microstep size 32usteps
+		//double maxZ = *max_element(vector.begin(), vector.end());
+
+		sort(foci.begin(), foci.end(), &FocusSort);
+		long bestz= foci.back().z;
+		zstart = bestz - ( zwindow/2 * zstepsize);
+		cout << "best z:" << bestz << endl;
+
+		//fine focus
+		for (int i=0; i < zwindow; i++){
+			
+			//cout << "zval:" << foci[i].z << " focus:" << foci[i].focus << endl;
+			long znext = zstart + (i * zstepsize);
+			cmd << "M" << xval << "," << yval << "," << znext;
+			sendCommand(cmd.str());
+			cmd.str("");
+			FocusReading thispoint;
+			thispoint.z = znext;
+			thispoint.focus= getFocusMeasure();
+			ffoci.push_back(thispoint);
+			
+
+			cout << thispoint.z << "," << thispoint.focus << endl;
+			
+		
+
+		}//end for each image focus Z
+
+		//set current z to best
+
+		sort(ffoci.begin(), ffoci.end(), &FocusSort);
+		zval= ffoci.back().z;
+
+		cout << "updated Z =" << zval << endl; 
+
+		
+
+		for (int i=0; i < zwindow; i++){
+			
+			cout << "zval:" << ffoci[i].z << " focus:" << ffoci[i].focus << endl;
+		}
+
+		 
+
+
+
+	}//end focus camera
+
+	int capture_pylon_video(Timer* limitTimer, int channel) {
+
+		// The maximum number of images to be grabbed.
+		static const uint32_t c_countOfImagesToGrab = 300;
+		// When this amount of image data has been written, the grabbing is stopped.
+		static const int64_t c_maxImageDataBytesThreshold = 500 * 1024 * 1024;
+
+
+		
+		gotoWell();
+		setLamp(255);		
+		
+		 try
+		    {
+			// Check if CVideoWriter is supported and all DLLs are available.
+			if (!CVideoWriter::IsSupported())
+			{
+			    cout << "VideoWriter is not supported at the moment. Please install the pylon Supplementary Package for MPEG-4 which is available on the Basler website." << endl;
+			    // Releases all pylon resources.
+			   // PylonTerminate();
+			    // Return with error code 1.
+			    return 1;
+			}
+
+			// Create a video writer object.
+			CVideoWriter videoWriter;
+
+			// The frame rate used for playing the video (playback frame rate).
+			const int cFramesPerSecond = 5;
+			// The quality used for compressing the video.
+			const uint32_t cQuality = 90;
+
+			// Create an instant camera object with the first camera device found.
+			CInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice() );
+
+			// Print the model name of the camera.
+			cout << "Using device " << camera.GetDeviceInfo().GetModelName() << endl;
+
+			// Open the camera.
+			camera.Open();
+
+			// Get the required camera settings.
+			CIntegerParameter width( camera.GetNodeMap(), "Width" );
+			CIntegerParameter height( camera.GetNodeMap(), "Height" );
+			CEnumParameter pixelFormat( camera.GetNodeMap(), "PixelFormat" );
+
+			// Optional: Depending on your camera or computer, you may not be able to save
+			// a video without losing frames. Therefore, we limit the resolution:
+			width.TrySetValue( 1920, IntegerValueCorrection_Nearest );
+			height.TrySetValue( 1080, IntegerValueCorrection_Nearest );
+
+			// Map the pixelType
+			CPixelTypeMapper pixelTypeMapper( &pixelFormat );
+			EPixelType pixelType = pixelTypeMapper.GetPylonPixelTypeFromNodeValue( pixelFormat.GetIntValue() );
+
+			// Set parameters before opening the video writer.
+			videoWriter.SetParameter(
+			(uint32_t) width.GetValue(),
+			    (uint32_t) height.GetValue(),
+			    pixelType,
+			    cFramesPerSecond,
+			    cQuality );
+
+			// Open the video writer.
+			videoWriter.Open( "/wormbot/_TestVideo.mp4" );
+
+			// Start the grabbing of c_countOfImagesToGrab images.
+			// The camera device is parameterized with a default configuration which
+			// sets up free running continuous acquisition.
+			camera.StartGrabbing( c_countOfImagesToGrab, GrabStrategy_LatestImages );
+
+
+			cout << "Please wait. Images are being grabbed." << endl;
+
+			// This smart pointer will receive the grab result data.
+			CGrabResultPtr ptrGrabResult;
+
+			// Camera.StopGrabbing() is called automatically by the RetrieveResult() method
+			// when c_countOfImagesToGrab images have been retrieved.
+			while (camera.IsGrabbing())
+			{
+			    // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
+			    camera.RetrieveResult( 5000, ptrGrabResult, TimeoutHandling_ThrowException );
+
+			    // Image grabbed successfully?
+			    if (ptrGrabResult->GrabSucceeded())
+			    {
+				// Access the image data.
+				cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
+				cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
+				const uint8_t* pImageBuffer = (uint8_t*) ptrGrabResult->GetBuffer();
+				cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
+
+		    #ifdef PYLON_WIN_BUILD
+				// Display the grabbed image.
+				Pylon::DisplayImage( 1, ptrGrabResult );
+		    #endif
+
+				// If required, the grabbed image is converted to the correct format and is then added to the video file.
+				// If the orientation of the image does not mach the orientation required for video compression, the
+				// image will be flipped automatically to ImageOrientation_TopDown, unless the input pixel type is Yuv420p.
+				videoWriter.Add( ptrGrabResult );
+
+				// If images are skipped, writing video frames takes too much processing time.
+				cout << "Images Skipped = " << ptrGrabResult->GetNumberOfSkippedImages() << boolalpha
+				    << "; Image has been converted = " << !videoWriter.CanAddWithoutConversion( ptrGrabResult )
+				    << endl;
+
+				// Check whether the image data size limit has been reached to avoid the video file becoming too large.
+				if (c_maxImageDataBytesThreshold < videoWriter.BytesWritten.GetValue())
+				{
+				    cout << "The image data size limit has been reached." << endl;
+				    break;
+				}
+			    }
+			    else
+			    {
+				cout << "Error: " << std::hex << ptrGrabResult->GetErrorCode() << std::dec << " " << ptrGrabResult->GetErrorDescription() << endl;
+			    }
+			}
+		    }
+		    catch (const GenericException& e)
+		    {
+			// Error handling.
+			cerr << "An exception occurred." << endl
+			    << e.GetDescription() << endl;
+			
+		    }
+
+
+	}//end capture pylon video
+
+	int capture_pylon(int doaligner, int channel){
+
+		//cout << "cap pylon" << endl;
+
+		// Number of images to be grabbed.
+		static const uint32_t c_countOfImagesToGrab = 1;
+		int gotit = 0;
+
+		vector<int> compression_params;
+		compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION); //(CV_IMWRITE_PXM_BINARY);
+		compression_params.push_back(0);
+
+		  try
+		    {
+					cout << "try pylon" << endl;
+			// Create an instant camera object with the camera device found first.
+			
+			CBaslerUniversalInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice() );
+			INodeMap& nodemap = camera.GetNodeMap();
+			camera.Open();
+					/*		
+				// Get camera device information.
+							cout << "Camera Device Information" << endl
+							    << "=========================" << endl;
+							cout << "Vendor           : "
+							    << CStringParameter( nodemap, "DeviceVendorName" ).GetValue() << endl;
+							cout << "Model            : "
+							    << CStringParameter( nodemap, "DeviceModelName" ).GetValue() << endl;
+							cout << "Firmware version : "
+							    << CStringParameter( nodemap, "DeviceFirmwareVersion" ).GetValue() << endl << endl;
+
+							  // Camera settings.
+					cout << "Camera Device Settings" << endl
+					    << "======================" << endl;
+
+				*/
+       // Set the AOI:
+
+       // Get the integer nodes describing the AOI.
+        CIntegerParameter offsetX( nodemap, "OffsetX" );
+        CIntegerParameter offsetY( nodemap, "OffsetY" );
+        CIntegerParameter width( nodemap, "Width" );
+        CIntegerParameter height( nodemap, "Height" );
+	CFloatParameter exposure(nodemap, "ExposureTime");
+	CFloatParameter gamma(nodemap, "Gamma");
+	CFloatParameter gain(nodemap, "Gain");
+
+        
+        exposure.SetValue(getExposure(channel));
+	gain.SetValue(getGain(channel));
+	//gamma.SetValue(0.55);
+       
+
+        cout << "gain          : " << gain.GetValue() << endl;
+        cout << " exposure       : " << exposure.GetValue() << endl;
+       
+
+
+			
+		
+			
+		
+			// The parameter MaxNumBuffer can be used to control the count of buffers
+			// allocated for grabbing. The default value of this parameter is 10.
+			camera.MaxNumBuffer = 5;
+
+			//camera.ExposureMode.SetValue(ExposureMode_Timed);
+			cout << "USB:" << camera.IsUsb() << " GigE:" << camera.IsGigE() << endl;
+
+			
+
+
+			// Start the grabbing of c_countOfImagesToGrab images.
+			// The camera device is parameterized with a default configuration which
+			// sets up free-running continuous acquisition.
+			camera.StartGrabbing( c_countOfImagesToGrab);
+
+			// This smart pointer will receive the grab result data.
+			CGrabResultPtr ptrGrabResult;
+
+			// Camera.StopGrabbing() is called automatically by the RetrieveResult() method
+			// when c_countOfImagesToGrab images have been retrieved.
+
+			bool infocus = false;
+			int focuscounter = 0;
+
+			while ( !infocus) //!gotit )
+			{
+				cout << "count:" << gotit++ << endl; 
+			    // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
+			    camera.RetrieveResult( 5000, ptrGrabResult, TimeoutHandling_ThrowException);
+
+			    // Image grabbed successfully?
+			    if (ptrGrabResult->GrabSucceeded())
+			    {
+				// Access the image data.
+				//cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
+				//cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
+				const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+				//cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl << endl;
+				//camera.StopGrabbing();
+				//cout << "Frame#" << gotit << endl;
+
+				
+				//save the frame
+				stringstream number,filename;
+				number << setfill('0') << setw(6) << currentframe;
+				recordTemp(number.str());
+				switch(channel) {
+
+					case CAPTURE_BF:
+						filename << directory << "frame" << number.str() << ".png";
+						break;
+
+					case CAPTURE_GFP:
+						filename << directory << "GFP" << number.str() << ".png";
+						break;	
+
+					case CAPTURE_UV:
+						filename << directory << "UV" << number.str() << ".png";
+						break;
+					case CAPTURE_CHERRY:
+						filename << directory << "CHERRY" << number.str() << ".png";
+						break;
+
+				}//end switch
+
+
+				CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
+								
+				//gotit++;
+				
+				//incrementFrame(channel);//success increment the frame counter if needed
+				return 1;
+				
+				
+
+			    }
+			    else
+			    {
+				cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
+			    }
+				
+			}//end while
+		    }
+		    catch (const GenericException &e)
+		    {
+			// Error handling.
+			cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+			return 0;
+			
+		    }
+			
+
+	}//end capture_pylon
+
+
 
 
 
@@ -1258,6 +1882,13 @@ void setCherry(int intensity){
 
 }//end set lamp
 
+void setUV(int intensity){
+	stringstream ls;
+	ls << "UL" << intensity;
+	sendCommand(ls.str());
+
+}//end set lamp
+
 void chordBeep(double octave){
 	stringstream beeper;
 	cout << (int)((double)370 * octave);
@@ -1270,12 +1901,17 @@ void chordBeep(double octave){
 	beeper << "beep  -l 3333 -f " << (int)((double)554 * octave);  //c#
 	system(beeper.str().c_str());
 }//end chord beep
-/*
+
 int setupPylonCamera(void){
 	try {
+
+		CGrabResultPtr ptrGrabResult; //grabptr
+
 		CInstantCamera camera(CTlFactory::GetInstance().CreateFirstDevice()); //the camera device
 		camera.StartGrabbing( 10);
 		camera.RetrieveResult( 5000, ptrGrabResult, TimeoutHandling_ThrowException);
+		
+		
 
             // Image grabbed successfully?
             if (ptrGrabResult->GrabSucceeded())
@@ -1287,8 +1923,6 @@ int setupPylonCamera(void){
 
 	}//end exception caught
 }//end setupPylonCamera
-
-*/ 
 
 void sendEmail(string emailaddress, string mailsubject, string messagebody){
 	stringstream cmdline;
@@ -1459,7 +2093,7 @@ void scanExperiments(void) {
 	//int count = 0;
 
 	// sort wells
-	std::sort(wells.begin(), wells.end(), rank_sort());
+	//std::sort(wells.begin(), wells.end(), rank_sort());
 
 	for (vector<Well*>::iterator citer = wells.begin(); citer != wells.end(); citer++) {
 		//int captured = 0;
@@ -1471,37 +2105,52 @@ void scanExperiments(void) {
 			thisWell->gotoWell();
 			setLamp(255);
 			int captured = 0;
+
+			if (ZAXIS) thisWell->focusCamera();
+			thisWell->gotoWell(); // goto best focus
 			while (captured != 1) {
-				captured = thisWell->capture_frame(align);
+				captured = thisWell->capture_pylon(align, CAPTURE_BF);
 				
 			}
 			setLamp(0);
 		}//end if timelapse active
+
+		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeUV > 0) {
+			thisWell->gotoWell();
+			
+			setUV(255);
+			int captured = 0;
+			while (captured != 1) {
+				captured = thisWell->capture_pylon(align, CAPTURE_UV);
+				
+			}
+			setUV(0);
+		}//end if uv active
 		
-		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeGFP) {
+		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeGFP >0) {
 			thisWell->gotoWell();
 			
 			setGFP(255);
 			int captured = 0;
 			while (captured != 1) {
-				captured = thisWell->capture_GFP(align);
+				captured = thisWell->capture_pylon(align, CAPTURE_GFP);
 				
 			}
 			setGFP(0);
 		}//end if gfp active
 
-		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeCherry) {
+		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeCherry > 0) {
 			thisWell->gotoWell();
 			
 			setCherry(255);
 			int captured = 0;
 			while (captured != 1) {
-				captured = thisWell->capture_Cherry(align);
+				captured = thisWell->capture_pylon(align, CAPTURE_CHERRY);
 				
 			}
 			setCherry(0);
-		}//end if gfp active
-	}//end for each well
+		}//end if cherry active
+	}//end for each
 }//end scanExperiments
 
 
@@ -1834,9 +2483,9 @@ int main(int argc, char** argv) {
 
 	
 	
-	//cout << "Init Pylon runtime" << endl;
-	//PylonInitialize();
-	//cout << "Setup Pylon Camera" << endl;
+	cout << "Init Pylon runtime" << endl;
+	PylonInitialize();
+	cout << "Setup Pylon Camera" << endl;
 	//setupPylonCamera();
 
 
@@ -1977,7 +2626,7 @@ int main(int argc, char** argv) {
 				if (currWell != NULL) {
 					cout << "  capturing video for monitor slot " << currMonitorSlot
 						 << " (expID: " << currWell->expID << ")" << endl;
-					currWell->captureVideo(&scanTimer);
+					currWell->capture_pylon_video(&scanTimer,BRIGHTFIELD);
 
 					// start video analysis
 					/*

@@ -163,6 +163,9 @@ color:white
       <div class="plate-info-modal">
 		Activate Timelapse<input type="checkbox" name="active"> <br>
 		Daily Monitor<input type="checkbox" name="adm"> <br>
+		405nm UV<input type="text" name="auv">us <br>
+		488nm GFP<input type="text" name="agfp">us <br>
+		580nm Cherry<input type="text" name="acherry">us <br>
 		 Investigator:<br><input type="text" name="investigator"=><br>
 		 Email:<br><input type="text" name="email"=><br>
 		 Title:<br><input type="text" name="title"><br>
@@ -227,6 +230,7 @@ function applyChanges() {
 	var contentMap = new Map();
 	for (i = 0; i < modal_content.length; i++) {
 		contentMap.set(modal_content[i].name, modal_content[i].value);
+		console.log(i + "modal name=" + modal_content[i].name + ", modal value = " + modal_content[i].value);
 	}
 
 	var plate_list = document.querySelectorAll(".plate-info");

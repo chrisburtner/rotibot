@@ -91,7 +91,7 @@ function fillSelectedPlateWithOldData(plateNum) {
     var allSlots = document.querySelectorAll(".plate-info");
     for (var i = 0; i < allSlots.length; i++) {
         var temp = allSlots[i].querySelectorAll("input");
-        for (var j = 2; j < temp.length; j++) {
+        for (var j = 2; j < temp.length; j++) { //here weird
             
             temp[j].value = '';
             
@@ -120,13 +120,29 @@ function fillSelectedPlateWithOldData(plateNum) {
             var slot = allSlots[index].querySelectorAll("input");
             setOfOldTask.add(index);
             // manually assign to all
-            slot[2].value = task[3].innerHTML;
-            slot[3].value = task[8].innerHTML;
-            slot[4].value = task[9].innerHTML;
-            slot[5].value = task[10].innerHTML;
-            slot[6].value = task[11].innerHTML;
-            slot[7].value = task[12].innerHTML;
-            slot[8].value = task[13].innerHTML;
+            slot[5].value = task[3].innerHTML;
+            slot[6].value = task[8].innerHTML;
+            slot[7].value = task[9].innerHTML;
+            slot[8].value = task[10].innerHTML;
+	    slot[2].value = task[16].innerHTML;
+	    slot[3].value = task[17].innerHTML;
+            slot[4].value = task[18].innerHTML;
+	    slot[9].value = task[11].innerHTML;
+            slot[10].value = task[12].innerHTML;
+            slot[11].value = task[13].innerHTML;
+	    if (task[19].innerHTML > 0) slot[0].checked = true;
+	    if (task[20].innerHTML != -1) slot[1].checked = true;
+			
+            
+	    for (var q = 0; q < slot.length; q++) {
+
+		console.log("slot " + q + " " + slot[q].value); 
+	    } //end for each slot
+	    for (var b = 0; b < task.length; b++) {
+
+		console.log("task " + b + " " + task[b].innerHTML); 
+	    } //end for each task
+	
             
                 //console.log(task[10].disabled);
             
