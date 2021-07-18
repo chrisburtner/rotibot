@@ -2150,6 +2150,7 @@ void scanExperiments(void) {
 			}
 			setCherry(0);
 		}//end if cherry active
+		thisWell->incrementFrame(BLIND);
 	}//end for each
 }//end scanExperiments
 
