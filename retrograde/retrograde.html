@@ -59,7 +59,11 @@ function pad(num) {
 //GLOBALS
 
 var filename = "";      //frame filename
-var img = new Image(); //frame
+var img = new Image(); //brightfield
+var gfpImg = new Image(); //gfp channel
+var uvImg = new Image(); //UV channel
+var cherryImg = new Image();
+
 var maxskip = 0; //maximum number of consequtive missing frames to skip
 var framenumber=0; //hold the currently displayed frame number
 var expID = 0;
@@ -182,12 +186,13 @@ function getNextGoodFrame() {
 		  if (framenumber <0) framenumber=0;
 	          if (framenumber >= totalframes) framenumber =totalframes-1;
 
-                  filename = "/wormbot/" + expID + "/aligned" + pad(framenumber) + ".png";
+                  filename = "/wormbot/" + expID + "/GFP" + pad(framenumber) + ".png";
                   console.log(filename);
                   newimg = new Image();
 		  newimg.src = filename;
                   newimg.onload = function() {
-                        ctx.drawImage(newimg, 0, 0);
+                        //ctx.drawImage(newimg, 0, 0);
+			drawChannels();
                          };
  		  newimg.onerror = function () {
 			        console.log("error filename:" + filename + " width " + newimg.naturalWidth); 
@@ -201,13 +206,43 @@ function LoadFrame(){
 	if (framenumber <0) framenumber=0;
 	if (framenumber >totalframes) framenumber =totalframes=1;
 	shifty=arguments[0];
-        filename = "/wormbot/" + expID + "/aligned" + pad(framenumber) + ".png";
+
+	//load birghtfield
+        filename = "/wormbot/" + expID + "/frame" + pad(framenumber) + ".png";
         img.src = filename;
+
+	//load GFP
+	filename = "/wormbot/" + expID + "/GFP" + pad(framenumber) + ".png";
+	gfpImg.src = filename;
+
+	//load Cherry
+	filename = "/wormbot/" + expID + "/CHERRY" + pad(framenumber) + ".png";
+	cherryImg.src = filename;
+
 	img.onload = function(e) {
-		console.log("frame" + framenumber + " width" + img.width + " height" + img.height + " shift" + shifty); 
+		//console.log("frame" + framenumber + " width" + img.width + " height" + img.height + " shift" + shifty); 
+                if (img.complete == true && img.naturalWidth != 0) {
+ 		
+                    //ctx.drawImage(img, 0, 0);
+			drawChannels();
+
+        	}
+	};
+	gfpImg.onload = function(e) {
+		//console.log("frame" + framenumber + " width" + img.width + " height" + img.height + " shift" + shifty); 
                 
- 		if (img.complete == true && img.naturalWidth != 0) {
-                    ctx.drawImage(img, 0, 0);
+ 		if (gfpImg.complete == true && gfpImg.naturalWidth != 0) {
+                    //ctx.drawImage(img, 0, 0);
+			drawChannels();
+
+        	}
+	};
+	cherryImg.onload = function(e) {
+		//console.log("frame" + framenumber + " width" + img.width + " height" + img.height + " shift" + shifty); 
+                
+ 		if (cherryImg.complete == true && cherryImg.naturalWidth != 0) {
+                    //ctx.drawImage(img, 0, 0);
+			drawChannels();
 
         	}
 	};
@@ -579,6 +614,9 @@ makeDataPanel();
 var canvas = document.getElementById("canvas");
 ctx = canvas.getContext("2d");
 
+//set blend mode to color mix
+ctx.globalCompositeOperation = "screen";
+
 
 // style the context
 ctx.strokeStyle = "green";
@@ -639,7 +677,7 @@ function addNewRect(){
 		startX=mouseX;
 		mouseX=swap;
 	} 
-	if (mouseY - startY < 0) {  
+	if (mouseY - startY < 0) {  Update Se
                 swap=startY;
                 startY=mouseY;
                 mouseY=swap;
@@ -667,7 +705,7 @@ function handleMouseUp(e) {
 		break;
 	case 2: //middle mouse button
 		// clear the canvas
-		  ctx.drawImage(img,0,0);
+		  drawChannels();
 		  drawRects();
 	          drawDeadworms();		
 		break;
@@ -679,6 +717,11 @@ function handleMouseUp(e) {
 }
 
 
+function drawChannels(){
+	ctx.drawImage(img,0,0);
+	ctx.drawImage(gfpImg,0,0);
+	ctx.drawImage(cherryImg,0,0);
+}//end draw channels
 
 
 function handleMouseOut(e) {
@@ -711,8 +754,8 @@ function handleMouseMove(e) {
 
 
     // clear the canvas
-  ctx.drawImage(img,0,0);
-  
+ // ctx.drawImage(img,0,0);
+  drawChannels();
 
 
     // calculate the rectangle width/height based

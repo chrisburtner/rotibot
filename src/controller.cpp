@@ -1549,27 +1549,70 @@ public:
 				stringstream number,filename;
 				number << setfill('0') << setw(6) << currentframe;
 				recordTemp(number.str());
+
+
+				//convert pylon to opencv RGB for fluor
+				CPylonImage target;
+				Mat dst;
+
+			        CImageFormatConverter converter;
+			        converter.OutputPixelFormat=PixelType_Mono8;
+			  	converter.Convert(target,ptrGrabResult);
+				Mat src_gray(target.GetHeight(),target.GetWidth(),CV_8UC1,target.GetBuffer(),Mat::AUTO_STEP);
+				Mat allblack(target.GetHeight(),target.GetWidth(),CV_8UC1,Scalar(0));
+				Mat colorimage(target.GetHeight(),target.GetWidth(),CV_8UC3,Scalar(0,0,0));
+				vector<Mat> channels;
+
+  				
+
+			    
+
+
+			//opencv merge B G R
+
+
+
 				switch(channel) {
 
 					case CAPTURE_BF:
 						filename << directory << "frame" << number.str() << ".png";
+						//no channels to merge, just save it 
+						CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
 						break;
 
 					case CAPTURE_GFP:
 						filename << directory << "GFP" << number.str() << ".png";
+						channels.push_back(allblack);//blue
+						channels.push_back(src_gray);//green
+						channels.push_back(allblack);//red
+			   			merge(channels, colorimage);
+						imwrite(filename.str(), colorimage, compression_params);
+						
 						break;	
 
 					case CAPTURE_UV:
 						filename << directory << "UV" << number.str() << ".png";
+						channels.push_back(src_gray);//blue
+						channels.push_back(allblack);//green
+						channels.push_back(allblack);//red
+			   			merge(channels, colorimage);
+						imwrite(filename.str(), colorimage, compression_params);
+
 						break;
 					case CAPTURE_CHERRY:
 						filename << directory << "CHERRY" << number.str() << ".png";
+						channels.push_back(allblack);//blue
+						channels.push_back(allblack);//green
+						channels.push_back(src_gray);//red
+			   			merge(channels, colorimage);
+						imwrite(filename.str(), colorimage, compression_params);
+
 						break;
 
 				}//end switch
 
 
-				CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
+				
 								
 				//gotit++;
 				
