@@ -47,7 +47,7 @@ var shiftLock = false;
 
 function drawRects() {
     for (i = 0; i < rects.length; i++) {
-        ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+        if (framenumber >= rects[i].f) ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
     }
 }
 
@@ -186,24 +186,52 @@ function LoadFrame() {
     cherryImg.src = filename;	
     img.onload = function () {
 	
-        //ctx.drawImage(img, 0, 0);
+        
 	drawChannels();
+	document.getElementById("BFchan").disabled= false;
     };
+
+    img.onerror = function (){
+	//disable that channel selector if image error
+	document.getElementById("BFchan").disabled= true;
+
+	};//end on error
+	
 	  gfpImg.onload = function () {
-	 //ctx.drawImage(gfpImg, 0, 0);
+	 
+	document.getElementById("BFchan").disabled= false;
 	drawChannels();
       
     };
-  cherryImg.onload = function () {
-	 //ctx.drawImage(cherryImg, 0, 0);
+	gfpImg.onerror = function (){
+	//disable that channel selector
+	document.getElementById("GFPchan").disabled= true;
+
+	};//end on error
+
+  	cherryImg.onload = function () {
+	document.getElementById("CHERRYchan").disabled= false;
 	drawChannels();
       
     };
+
+	cherryImg.onerror = function (){
+	//disable that channel selector
+	document.getElementById("CHERRYchan").disabled= true;
+
+	};//end on error
+
 	 uvImg.onload = function () {
-	// ctx.drawImage(uvImg, 0, 0);
+	document.getElementById("UVchan").disabled= false;
 	drawChannels();
       
     };
+
+	uvImg.onerror = function (){
+	//disable that channel selector
+	document.getElementById("UVchan").disabled= true;
+
+	};//end on error
 
     drawChannels();
     drawRects();
@@ -441,6 +469,11 @@ function doUpdateWormList() {
 
 }//end dod updatewormlist
 
+
+
+
+
+
 $(window).load(function () {
 
 
@@ -489,6 +522,27 @@ $(window).load(function () {
     gotoBtn.className = "side-btn";
 
 
+	//add listeners for channel checkboxes
+	var bfE = document.querySelector("#BFchan");
+
+	bfE.addEventListener( 'change', function() {
+	   	redraw();
+	});
+	var gfpE = document.querySelector("#GFPchan");
+
+	gfpE.addEventListener( 'change', function() {
+	   	redraw();
+	});
+	var cherryE = document.querySelector("#CHERRYchan");
+
+	cherryE.addEventListener( 'change', function() {
+	   	redraw();
+	});
+	var uvE = document.querySelector("#UVchan");
+
+	uvE.addEventListener( 'change', function() {
+	   	redraw();
+	});
    
 
 
@@ -767,12 +821,14 @@ $(window).load(function () {
     // listen for mouse events
     $("#canvas").mousedown(function (e) {
         handleMouseDown(e);
+	
     });
     $("#canvas").mousemove(function (e) {
         handleMouseMove(e);
     });
     $("#canvas").mouseup(function (e) {
         handleMouseUp(e);
+	redraw();
     });
     $("#canvas").mouseout(function (e) {
         handleMouseOut(e);
