@@ -72,6 +72,9 @@ using namespace GenApi;
 
 #define PORT "/dev/ttyACM0" //This is system-specific"/tmp/interceptty" we need to make this configurable
 
+#define DOUBLEFRAMES true // take two images instead of 1 to detect movement
+#define DOUBLESPEED 5 //number of seconds between double frames
+
 
 #define MAX_PLATES 12
 #define MAX_WELLS 12
@@ -114,7 +117,7 @@ using namespace GenApi;
 #define CAPTURE_CHERRY 2
 #define CAPTURE_UV 3
 
-#define DEFAULT_EXPOSURE 15000
+#define DEFAULT_EXPOSURE 45000
 
 #define ACCEPTABLE_JITTER 2
 #define JITTER_WAIT 500
@@ -129,10 +132,10 @@ using namespace GenApi;
 #define STARTSTEPS 128
 
 //gain params
-#define DEFAULT_GAIN 10.0f
-#define GFP_GAIN 25.0f
-#define UV_GAIN 25.0f
-#define CHERRY_GAIN 25.0f
+#define DEFAULT_GAIN 0.0f
+#define GFP_GAIN 10.0f
+#define UV_GAIN 10.0f
+#define CHERRY_GAIN 20.0f
 
 
 
@@ -2142,58 +2145,76 @@ void scanExperiments(void) {
 		//int captured = 0;
 		//cout << "count:" << count++ << endl;
 		cmd.str("");
-
+		bool firstframe=true;
 		Well* thisWell = *citer;
-		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->timelapseActive) {
-			thisWell->gotoWell();
-			setLamp(255);
-			int captured = 0;
 
-			if (ZAXIS) thisWell->focusCamera();
-			thisWell->gotoWell(); // goto best focus
-			while (captured != 1) {
-				captured = thisWell->capture_pylon(align, CAPTURE_BF);
-				
-			}
-			setLamp(0);
-		}//end if timelapse active
+		takesecond: //goto take a second image
 
-		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeUV > 0) {
-			thisWell->gotoWell();
-			
-			setUV(255);
-			int captured = 0;
-			while (captured != 1) {
-				captured = thisWell->capture_pylon(align, CAPTURE_UV);
-				
-			}
-			setUV(0);
-		}//end if uv active
 		
-		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeGFP >0) {
-			thisWell->gotoWell();
-			
-			setGFP(255);
-			int captured = 0;
-			while (captured != 1) {
-				captured = thisWell->capture_pylon(align, CAPTURE_GFP);
-				
-			}
-			setGFP(0);
-		}//end if gfp active
 
-		if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeCherry > 0) {
-			thisWell->gotoWell();
-			
-			setCherry(255);
-			int captured = 0;
-			while (captured != 1) {
-				captured = thisWell->capture_pylon(align, CAPTURE_CHERRY);
+
+				if (thisWell->status == WELL_STATE_ACTIVE && thisWell->timelapseActive) {
+					thisWell->gotoWell();
+					setLamp(255);
+					int captured = 0;
+
+					if (ZAXIS) thisWell->focusCamera();
+					thisWell->gotoWell(); // goto best focus
+					while (captured != 1) {
+						captured = thisWell->capture_pylon(align, CAPTURE_BF);
+						
+					}
+					setLamp(0);
+				}//end if timelapse active
+
+				if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeUV > 0) {
+					thisWell->gotoWell();
+					
+					setUV(255);
+					int captured = 0;
+					while (captured != 1) {
+						captured = thisWell->capture_pylon(align, CAPTURE_UV);
+						
+					}
+					setUV(0);
+				}//end if uv active
 				
-			}
-			setCherry(0);
-		}//end if cherry active
-		thisWell->incrementFrame(BLIND);
+				if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeGFP >0) {
+					thisWell->gotoWell();
+					
+					setGFP(255);
+					int captured = 0;
+					while (captured != 1) {
+						captured = thisWell->capture_pylon(align, CAPTURE_GFP);
+						
+					}
+					setGFP(0);
+				}//end if gfp active
+
+				if (thisWell->status == WELL_STATE_ACTIVE && thisWell->activeCherry > 0) {
+					thisWell->gotoWell();
+					
+					setCherry(255);
+					int captured = 0;
+					while (captured != 1) {
+						captured = thisWell->capture_pylon(align, CAPTURE_CHERRY);
+						
+					}
+					setCherry(0);
+				}//end if cherry active
+				thisWell->incrementFrame(BLIND);
+				
+				if (DOUBLEFRAMES && firstframe){
+					Timer doubletimer((long)0);
+					firstframe=false;
+					doubletimer.startTimer((long)DOUBLESPEED);
+					while(!doubletimer.checkTimer()){} //wait until timer expires
+					goto takesecond;
+
+				}//end if need double
+					
+
+				
 	}//end for each
 }//end scanExperiments
 
