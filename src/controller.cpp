@@ -135,7 +135,7 @@ using namespace GenApi;
 #define DEFAULT_GAIN 0.0f
 #define GFP_GAIN 10.0f
 #define UV_GAIN 10.0f
-#define CHERRY_GAIN 20.0f
+#define CHERRY_GAIN 10.0f
 
 
 
@@ -1487,6 +1487,14 @@ public:
         CIntegerParameter offsetY( nodemap, "OffsetY" );
         CIntegerParameter width( nodemap, "Width" );
         CIntegerParameter height( nodemap, "Height" );
+
+	
+	cout << "help ffs:" << camera.LightSourcePreset.GetValue() << endl;
+	camera.LightSourcePreset.SetValue("Off"); 
+	cout << "woeked?:" << camera.LightSourcePreset.GetValue() << endl;
+	//LightSourcePresetEnums e = camera.LightSourcePreset.GetValue();
+
+	
 	CFloatParameter exposure(nodemap, "ExposureTime");
 	CFloatParameter gamma(nodemap, "Gamma");
 	CFloatParameter gain(nodemap, "Gain");
@@ -1494,6 +1502,8 @@ public:
         
         exposure.SetValue(getExposure(channel));
 	gain.SetValue(getGain(channel));
+	//lightsource.SetValue("Off");
+	
 	//gamma.SetValue(0.55);
        
 

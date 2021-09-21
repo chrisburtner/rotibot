@@ -421,9 +421,27 @@ void scanRobotDir(string robotdir){
 
 }//end scanrobotdir
 
+
+
+string getFileNumber(string filename, string prefix, string suffix){
+
+	string::size_type pos = filename.find( prefix );
+    pos = ( pos == string::npos ? 0 : pos + prefix.size() );
+
+    string::size_type n = filename.rfind( suffix );
+
+    n = ( n == string::npos || n < pos ? string::npos : n - pos );
+
+    string noextension(filename.substr( pos, n ));
+	
+    return noextension;
+
+
+}//end getfilenumber
+
 string getMovieTime(string movie){
 	stringstream epc;
-	epc << getFileCreationTime(movie);
+	epc << getFileNumber(movie,"day",".avi") << "," << getFileCreationTime(movie);
 	return epc.str();
 
 }//end getmovietime
@@ -476,6 +494,7 @@ void readDirectory(string fulldirectory){
 	long numaligned=0;
 	long nummovies=0;
 
+	timelog << "Frame, EPOCH" << endl;
 	stringstream globpattern;
 	globpattern  << fulldirectory.c_str() << string("frame*.png");
 	cout <<"globpat:" << globpattern.str() << endl;
@@ -483,18 +502,19 @@ void readDirectory(string fulldirectory){
 
 	for (unsigned int i=0; i < glob_result.gl_pathc; i++){
 		timelog << getFrameTime(string(glob_result.gl_pathv[i])) << endl;
-		cout << "loop" << i << endl;
+		//cout << "loop" << i << endl;
 	}//end for each glob
 
-	if (numframes == 0) return;
-
+	
+	
 	//scan for movie files
 	globpattern.str("");
 	globpattern  << fulldirectory.c_str() << string("day*.avi");
 	glob(globpattern.str().c_str(),GLOB_TILDE,NULL,&aligned_result);
+	timelog << "MonitorDay, EPOCH" << endl;
 
 	for (unsigned int i=0; i < aligned_result.gl_pathc; i++){
-            timelog << getMovieTime(string(glob_result.gl_pathv[i])) << endl;
+            timelog << getMovieTime(string(aligned_result.gl_pathv[i])) << endl;
 		}//end for each glob
 
 
