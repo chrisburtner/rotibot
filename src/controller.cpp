@@ -1,3 +1,4 @@
+
 //============================================================================
 // Name        : controller.cpp  | with  dot following
 // Authors     : Jason N Pitt and Nolan Strait
@@ -42,12 +43,16 @@
 #include <opencv/cv.hpp>
 #include <opencv2/videoio.hpp>
 
+//determine camera type for includes
 
-#include <pylon/PylonIncludes.h>
-#include <GenApi/GenApi.h>;
-#include <pylon/BaslerUniversalInstantCamera.h>
+#ifdef USE_BASLER
 
 
+	#include <pylon/PylonIncludes.h>
+	#include <GenApi/GenApi.h>;
+	#include <pylon/BaslerUniversalInstantCamera.h>
+
+#endif
 
 #include "constants.h"
 
@@ -60,9 +65,11 @@ uint8_t *buffer;
 
 using namespace std;
 using namespace LibSerial;
-using namespace Pylon;
-using namespace GenApi;
 
+#ifdef USE_BASLER
+	using namespace Pylon;
+	using namespace GenApi;
+#endif
 
 #define TESTING false // speeds up process for faster debugging
 
@@ -79,7 +86,7 @@ using namespace GenApi;
 #define MAX_PLATES 12
 #define MAX_WELLS 12
 #define WELL_WAIT_PERIOD 1  //pause between wells
-#define SCAN_PERIOD (TESTING ? 30 : 600)   // time between scans (default 600sec/10min)
+#define SCAN_PERIOD (TESTING ? 30 : 1200)   // time between scans (default 1200sec/20min)
 #define LOAD_WAIT_PERIOD (TESTING ? 20 : 120) // default 120sec/2min
 #define SCAN_COMPLETE_TIMEOUT 1800//maximum time to wait for a scan before resetting robot state 30 min
 
@@ -123,7 +130,7 @@ using namespace GenApi;
 #define JITTER_WAIT 500
 #define CALIBRATE_FREQ 200 //number of scans between calibration runs, 144 once per day
 
-#define FRAMECYCLE 50 //sets a number of frames to grab from the camera for each still, often the first frames a garbage as the camera adjusts lighting
+#define FRAMECYCLE 5 //sets a number of frames to grab from the camera for each still, often the first frames a garbage as the camera adjusts lighting
 
 //focus params
 #define NEGATIVE 0
@@ -1094,7 +1101,7 @@ public:
 
 	}//end captureUV
 
-
+#ifdef USE_BASLER
 		
 	double getFocusMeasure(void){
 		
@@ -1312,6 +1319,7 @@ public:
 
 	}//end focus camera
 
+
 	int capture_pylon_video(Timer* limitTimer, int channel) {
 
 		// The maximum number of images to be grabbed.
@@ -1443,6 +1451,7 @@ public:
 
 
 	}//end capture pylon video
+
 
 	int capture_pylon(int doaligner, int channel){
 
@@ -1590,7 +1599,8 @@ public:
 					case CAPTURE_BF:
 						filename << directory << "frame" << number.str() << ".png";
 						//no channels to merge, just save it 
-						CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
+						//CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
+						imwrite(filename.str(), src_gray, compression_params);
 						break;
 
 					case CAPTURE_GFP:
@@ -1655,7 +1665,7 @@ public:
 	}//end capture_pylon
 
 
-
+#endif //end if use basler
 
 
 	int captureVideo(Timer* limitTimer) {
@@ -1958,27 +1968,39 @@ void chordBeep(double octave){
 	system(beeper.str().c_str());
 }//end chord beep
 
-int setupPylonCamera(void){
-	try {
+#ifdef USE_BASLER
+	int setupPylonCamera(void){
+		try {
 
-		CGrabResultPtr ptrGrabResult; //grabptr
+			CGrabResultPtr ptrGrabResult; //grabptr
 
-		CInstantCamera camera(CTlFactory::GetInstance().CreateFirstDevice()); //the camera device
-		camera.StartGrabbing( 10);
-		camera.RetrieveResult( 5000, ptrGrabResult, TimeoutHandling_ThrowException);
-		
-		
+			CInstantCamera camera(CTlFactory::GetInstance().CreateFirstDevice()); //the camera device
+			camera.StartGrabbing( 10);
+			camera.RetrieveResult( 5000, ptrGrabResult, TimeoutHandling_ThrowException);
+			
+			
 
-            // Image grabbed successfully?
-            if (ptrGrabResult->GrabSucceeded())
-            {
-		cout << "fuck yeah" << endl;
-		}
-	} catch (const GenericException &e) {
-		
+		    // Image grabbed successfully?
+		    if (ptrGrabResult->GrabSucceeded())
+		    {
+			cout << "fuck yeah" << endl;
+			}
+		} catch (const GenericException &e) {
+			
 
-	}//end exception caught
-}//end setupPylonCamera
+		}//end exception caught
+	}//end setupPylonCamera
+
+#endif
+
+string getMachineName(){
+	stringstream mfilename;
+	mfilename << datapath << "machinename";
+	ifstream nf(mfilename.str().c_str());
+	string thename;
+	getline(nf,thename);
+	return(thename);
+}//end getMachinename
 
 void sendEmail(string emailaddress, string mailsubject, string messagebody){
 	stringstream cmdline;
@@ -2032,9 +2054,11 @@ void sendExperimentStatus(void){
 			}//end if active
 	}//end for each well
 
+	
+
 	stringstream emailmessage;
 
-	emailmessage << "Good day.\n I'm functioning properly and I would like to give you an update on the experiments you have running on my system.  Your experiments are listed below.\n Sincerely yours,\n WormBot" << endl;  
+	emailmessage << "Good day.\n This is:" << getMachineName() << "\nI'm functioning properly and I would like to give you an update on the experiments you have running on my system.  Your experiments are listed below.\n Sincerely yours,\n WormBot" << endl;  
        
 	for (vector<UserStatus>::iterator citer = userlist.begin(); citer != userlist.end(); citer++) {
 		cout << "email:" << (*citer).email << "list:" << (*citer).getExperiments() <<endl;
@@ -2069,7 +2093,7 @@ void sendDiskWarning(int pfull, int maxfull){
 
 	stringstream emailmessage;
 
-	emailmessage << "Good day.\n I'm sorry to trouble you but this message is to notify you that there has been a fault in your WormBot system.  The hard drive holding your WormBot data is " << pfull << "% full. If the system reaches " << maxfull << "% full, your WormBot system will shutdown until you increase the free space on the system. I hope you have a pleasent day.\n Sincerely yours,\n WormBot" << endl;  
+	emailmessage << "Good day.\n This is:" << getMachineName() <<  "\nI'm sorry to trouble you but this message is to notify you that there has been a fault in your WormBot system.  The hard drive holding your WormBot data is " << pfull << "% full. If the system reaches " << maxfull << "% full, your WormBot system will shutdown until you increase the free space on the system. I hope you have a pleasent day.\n Sincerely yours,\n WormBot" << endl;  
 	
 	for (vector<string>::iterator citer = emaillist.begin(); citer != emaillist.end(); citer++) {
 		cout << "email:" << *citer <<endl;
@@ -2097,7 +2121,7 @@ void sendDiskFull(int pfull, int maxfull){
 
 	stringstream emailmessage;
 
-	emailmessage << "Good day.\n I'm sorry to trouble you but this message is to notify you that there has been a fault in your WormBot system.  The hard drive holding your WormBot data is " << pfull << "% full. This is greater than the " << maxfull << "% threshold to insure your system runs without error. Your WormBot system has now paused data collection until you increase the free space on the system. I hope you have a pleasent day.\n Sincerely yours,\n WormBot" << endl;  
+	emailmessage << "Good day.\n  This is:" << getMachineName() <<  "\nI'm sorry to trouble you but this message is to notify you that there has been a fault in your WormBot system.  The hard drive holding your WormBot data is " << pfull << "% full. This is greater than the " << maxfull << "% threshold to insure your system runs without error. Your WormBot system has now paused data collection until you increase the free space on the system. I hope you have a pleasent day.\n Sincerely yours,\n WormBot" << endl;  
 	
 	for (vector<string>::iterator citer = emaillist.begin(); citer != emaillist.end(); citer++) {
 		cout << "email:" << *citer <<endl;
@@ -2167,11 +2191,16 @@ void scanExperiments(void) {
 					thisWell->gotoWell();
 					setLamp(255);
 					int captured = 0;
-
-					if (ZAXIS) thisWell->focusCamera();
+					#ifdef USE_BASLER
+						if (ZAXIS) thisWell->focusCamera();
+					#endif
 					thisWell->gotoWell(); // goto best focus
 					while (captured != 1) {
-						captured = thisWell->capture_pylon(align, CAPTURE_BF);
+						#ifdef USE_BASLER
+							captured = thisWell->capture_pylon(align, CAPTURE_BF);
+						#else
+							captured = thisWell->capture_frame(align);
+						#endif
 						
 					}
 					setLamp(0);
@@ -2183,7 +2212,11 @@ void scanExperiments(void) {
 					setUV(255);
 					int captured = 0;
 					while (captured != 1) {
-						captured = thisWell->capture_pylon(align, CAPTURE_UV);
+						#ifdef USE_BASLER
+							captured = thisWell->capture_pylon(align, CAPTURE_UV);
+						#else
+							captured = thisWell->capture_frame(align);
+						#endif
 						
 					}
 					setUV(0);
@@ -2195,7 +2228,11 @@ void scanExperiments(void) {
 					setGFP(255);
 					int captured = 0;
 					while (captured != 1) {
-						captured = thisWell->capture_pylon(align, CAPTURE_GFP);
+						#ifdef USE_BASLER
+							captured = thisWell->capture_pylon(align, CAPTURE_GFP);
+						#else
+							captured = thisWell->capture_frame(align);
+						#endif
 						
 					}
 					setGFP(0);
@@ -2207,7 +2244,11 @@ void scanExperiments(void) {
 					setCherry(255);
 					int captured = 0;
 					while (captured != 1) {
-						captured = thisWell->capture_pylon(align, CAPTURE_CHERRY);
+						#ifdef USE_BASLER
+							captured = thisWell->capture_pylon(align, CAPTURE_CHERRY);
+						#else
+							captured = thisWell->capture_frame(align);
+						#endif
 						
 					}
 					setCherry(0);
@@ -2556,13 +2597,13 @@ int main(int argc, char** argv) {
 	cameranum = boost::lexical_cast<int>(camera[camera.length() - 1]);
 	cout << "camera number:" << cameranum << " " << camera << endl;
 
+	#ifdef USE_BASLER
+		cout << "Init Pylon runtime" << endl;
+		PylonInitialize();
+		cout << "Setup Pylon Camera" << endl;
+		//setupPylonCamera();
+	#endif 
 	
-	
-	cout << "Init Pylon runtime" << endl;
-	PylonInitialize();
-	cout << "Setup Pylon Camera" << endl;
-	//setupPylonCamera();
-
 
 	int portnum = 0;
 
@@ -2583,7 +2624,7 @@ int main(int argc, char** argv) {
 		cout << "Set baud rate 9600 and char size 8 bits\n Waiting for Robot to be ready." << endl;
 
 		sleep(20); //wait for robot to align itself
-
+		
 		sendCommand("M5000,5000");		
 		sendCommand("ZZ");
 		//sendCommand("CC");
@@ -2593,7 +2634,7 @@ int main(int argc, char** argv) {
 		sendCommand("IL0");
 		sendCommand("GL0");
 		sendCommand("CL0");
-
+		
 		robotfound=true;
 
 		/* wait for scanner
@@ -2701,7 +2742,11 @@ int main(int argc, char** argv) {
 				if (currWell != NULL) {
 					cout << "  capturing video for monitor slot " << currMonitorSlot
 						 << " (expID: " << currWell->expID << ")" << endl;
-					currWell->capture_pylon_video(&scanTimer,BRIGHTFIELD);
+					#ifdef USE_BASLER					
+						currWell->capture_pylon_video(&scanTimer,BRIGHTFIELD);
+					#else
+						currWell->captureVideo(&scanTimer);
+					#endif
 
 					// start video analysis
 					/*

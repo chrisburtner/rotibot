@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TESTING=false
+TESTING=true
 
 # save working directory
 WD=$(pwd)
@@ -51,7 +51,33 @@ sudo service apache2 restart
 #
 sudo ldconfig -v
 
+#get Robot Name
+echo "Enter a unique name for this WormBot: "
+read machinename
+echo "${machinename}" > /tmp/machinename
+
+#get Robot Type
+echo "Enter camera type (U) for UVC or (B) for Basler -fluorescence system: "
+read cameratype
+echo "${cameratype}" > /tmp/cameratype
+if [[ "$cameratype" == *[bB]* ]]; then
+	
+	{ echo  "#define USE_BASLER 1"; cat src/controller.cpp; } > /tmp/controller.cpp
+fi 
+ 
+
+
+#get Robot Size
+echo "Enter WormBot size (6) WormBotMini or (12) WormBot standard: "
+read robotsize
+echo "${robotsize}" > /tmp/robotsize
+
+
 # configure directories and all that sh*t
 cd $WD
 make all
-sudo ./CONFIG
+
+if ! $TESTING ;
+then
+	sudo ./CONFIG
+fi

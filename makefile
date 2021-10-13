@@ -23,6 +23,9 @@ grab: src/grab.cpp
 alignerd: src/alignerd.cpp
 	$(CXX) $(CFLAGS) src/alignerd.cpp $(LIB) $(OPENCV_LIB) -o bin/alignerd
 
+framediff: src/framediff.cpp
+	$(CXX) $(CFLAGS) src/framediff.cpp $(LIB) $(OPENCV_LIB) -o bin/framediff
+
 timelog: src/timelog.cpp
 	$(CXX) $(CFLAGS) src/timelog.cpp $(LIB) $(OPENCV_LIB) -o bin/timelog
 
@@ -77,7 +80,7 @@ trainingSetExport: src/trainingSetExport.cpp
 
 
 
-all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan timelog
+all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan timelog framediff
 
 
 

@@ -58,7 +58,7 @@ const Scalar SCALAR_RED = Scalar(0.0,0.0,255.0);
 int expID;
 string datapath; //hold the path to all the robot data
 //read in path from /usr/lib/cgi-bin/data_path
-ifstream pathfile("/usr/lib/cgi-bin/data_path");
+ifstream pathfile("/wormbot/cgi-bin/data_path");
 
 
 ofstream debugger;
@@ -330,43 +330,97 @@ vector <Worm> wormlist;
 // F U N C T I O N S
 
 
-
+static void on_trackbar( int, void* )
+{
+   // resizeWindow("Simple Ass BS", 800, cannyHigh);
+  // imshow( "Adjusted Out", adjustedOut );
+}
 
 //make an updated current_contour.png
-void Update_Contours(string filename, int lowthresh, int highthresh){
+int Update_Contours(string filename, int lowthresh, int highthresh){
 
-
+				try{
+							
+							vector<int> compression_params;
+							compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION); //(CV_IMWRITE_PXM_BINARY);
+							compression_params.push_back(0);			
 							Mat canny_output;
 							Mat inputImg;
 							inputImg = imread(filename.c_str());
+							debugger << "empty image " << inputImg.empty() << endl; 
+							debugger << "inputimg filename " << filename << endl;
+
+
+								cvtColor( inputImg, inputImg, COLOR_BGR2GRAY );
+
 
 							if (lowthresh < 0) lowthresh =0;
 							if (highthresh < 0) highthresh =0;
 							if (lowthresh > 255) lowthresh =255;
 							if (highthresh > 255) highthresh =255;
 
+							debugger << "low: " << lowthresh << " high: " << highthresh << endl;
+
 							vector<vector<Point> > contours;
+
 							vector<Vec4i> hierarchy;
-							blur( inputImg, inputImg, Size(3,3) );
-							Canny( inputImg, canny_output, lowthresh, highthresh, 3 );
-							findContours( canny_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+							int blurval=4;
+							
+							
+							
+							equalizeHist(inputImg,inputImg);
+							//threshold(inputImg,inputImg, binthresh, 255, THRESH_BINARY_INV);
+							blur( inputImg, inputImg, Size(blurval,blurval) );
+
+							
+								stringstream testfile;
+								testfile << datapath << expID << "/canny1.png";
+
+								debugger << "cannyoutput " << testfile.str() << endl;
+								
+								//Canny( inputImg, canny_output, lowthresh, highthresh, 3);
+								imwrite(testfile.str().c_str(), inputImg);
+
+							
+							
+							
+							Canny( inputImg, canny_output, lowthresh, highthresh, 3);
+							//imwrite(testfile.str().c_str(), inputImg);
+							
+							
+							
+
+							findContours( canny_output, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+							
 							Mat drawing = (Mat::zeros( canny_output.size(), CV_8UC1 ));
 
+							
+							debugger << "contour size: " << contours.size() << endl;
 							for( size_t j = 0; j< contours.size(); j++ )
 								 {
 								  double length=arcLength(contours[j], true);
 								  Rect boundRect=boundingRect(contours[j]);
 
 								   Scalar color = SCALAR_WHITE;
-								   drawContours( drawing, contours, (int)j, color, 2, 8, hierarchy, 0, Point() );
+								   drawContours( drawing, contours, (long)j, color, 2, 8, hierarchy, 0, Point() );
 
 
 								 }
+
+							
+
 							stringstream outfilename;
 						 	outfilename << datapath << expID << "/current_contrast.png";
-
+			
 						 	imwrite(outfilename.str().c_str(), drawing);
-
+		}  catch (cv::Exception ex) {
+			debugger << " output was bad" << endl;
+			return (0);
+		} //end caught exception trying to load
+							
+							
+	return 1;
+	  
 
 }//end update contours
 
@@ -567,9 +621,12 @@ int main(int argc,char **argv){
 
 	stringstream wormfilename;
 	 Cgicc cgi;
+
+	cout << HTTPHTMLHeader() << endl;
+        cout << html() << endl << endl;
 	 int moviestart,moviestop=0;
 	 int highthresh,lowthresh =0;
-	 int currframe;
+	 int currframe=837;
 
 	try {
 
@@ -581,7 +638,7 @@ int main(int argc,char **argv){
 	      highthresh = atoi(string(cgi("highthresh")).c_str());
     	  lowthresh = atoi(string(cgi("lowthresh")).c_str());
     	  currframe = atoi(string(cgi("currframe")).c_str());
-
+		debugger << "L:" << lowthresh << " " << cgi("lowthresh") << " H: " << highthresh  << " " << cgi("highthresh") <<  "EXPID:" << expID << " movie start:" << moviestart << endl;
 
 		time_t logtime;
 		time(&logtime);
@@ -637,7 +694,7 @@ int main(int argc,char **argv){
 
 	} catch (exception& e){
 		
-		return (0);
+		//return (0);
 
 	}//end exception caught
 
@@ -654,14 +711,15 @@ int main(int argc,char **argv){
 
 	}//end if want to build a new movie
 
-	if (cgi.queryCheckbox("checkboxUpdateContours")){
+	//if (cgi.queryCheckbox("updatecontours")){
 		stringstream currimgfilename;
 		stringstream number;
 		number << setfill('0') << setw(6) << currframe;
-		currimgfilename << datapath << expID << "/aligned" << number.str() << ".png";
+		currimgfilename << datapath << expID << "/frame" << number.str() << ".png";
+		debugger << "img filename " << currimgfilename.str() << endl;
 		Update_Contours(currimgfilename.str(),lowthresh, highthresh);
 
-	}//end if update contours
+	//}//end if update contours
 
 
 

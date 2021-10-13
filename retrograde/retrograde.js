@@ -13,11 +13,13 @@ var img = new Image(); //frames
 var gfpImg = new Image();
 var cherryImg = new Image();
 var uvImg = new Image();
+var contImg = new Image();
 
 var bfActive = true;
 var gfpActive=false;
 var cherryActive=false;
 var uvActive=false;
+var contActive=false;
 
 var framenumber = 0; //hold the currently displayed frame number
 var expID = 0;
@@ -83,11 +85,13 @@ function drawChannels() {
 	gfpActive = document.querySelector("#GFPchan").checked;
 	cherryActive= document.querySelector("#CHERRYchan").checked;
 	uvActive = document.querySelector("#UVchan").checked; 
+	contActive = document.querySelector("#CONTchan").checked; 
 
 	if (bfActive) ctx.drawImage(img, 0, 0);
 	if (gfpActive) ctx.drawImage(gfpImg, 0, 0);
 	if (cherryActive) ctx.drawImage(cherryImg, 0, 0);
 	if (uvActive) ctx.drawImage(uvImg, 0, 0);
+	if (contActive) ctx.drawImage(contImg, 0, 0);
 	
 	
 
@@ -183,7 +187,10 @@ function LoadFrame() {
     filename = "/wormbot/" + expID + "/UV" + pad(framenumber) + ".png";
     uvImg.src = filename;
     filename = "/wormbot/" + expID + "/CHERRY" + pad(framenumber) + ".png";
-    cherryImg.src = filename;	
+    cherryImg.src = filename;
+    var rnum = Math.random()	
+    filename = "/wormbot/" + expID + "/current_contrast.png?v=" + rnum;
+    contImg.src = filename;	
     img.onload = function () {
 	
         
@@ -230,6 +237,18 @@ function LoadFrame() {
 	uvImg.onerror = function (){
 	//disable that channel selector
 	document.getElementById("UVchan").disabled= true;
+
+	};//end on error
+
+	 contImg.onload = function () {
+	document.getElementById("CONTchan").disabled= false;
+	drawChannels();
+      
+    };
+
+	contImg.onerror = function (){
+	//disable that channel selector
+	document.getElementById("CONTchan").disabled= true;
 
 	};//end on error
 
@@ -460,6 +479,8 @@ function doUpdateWormList() {
 
             //alert(data);
             alert("Worm List Updated");
+	    LoadFrame();
+	    redraw();		
 
         }
     });
@@ -543,6 +564,11 @@ $(window).load(function () {
 	uvE.addEventListener( 'change', function() {
 	   	redraw();
 	});
+	var contE = document.querySelector("#CONTchan");
+
+	contE.addEventListener( 'change', function() {
+	   	redraw();
+	});
    
 
 
@@ -573,44 +599,15 @@ $(window).load(function () {
 
 
     delBtn.addEventListener("click", function () {
-        var deadwormsstring = JSON.stringify(deadworms);
-        var formE1 = document.forms.updateForm;
-        var formData = new FormData(formE1);
-        var startmovie = formData.get('moviestart');
-        var stopmovie = formData.get('moviestop');
-        var checkboxbuildmovie = formData.get('buildMovie');
-        highthresh = formData.get('upperthresh');
-        lowthresh = formData.get('lowerthresh');
-        var checkboxUpdateContours = formData.get('updatecontours');
-
-
-        $.ajax({
-            type: "POST",
-            url: "/cgi-bin/wormlistupdater",
-            data: {
-                "deadworms": deadwormsstring, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
-                "buildMovie": checkboxbuildmovie, "highthresh": highthresh,
-                "lowthresh": lowthresh, "checkboxUpdateContours": checkboxUpdateContours,
-                "currframe": framenumber
-            },
-            success: function () {
-
-                //alert(data);
-                alert("Worm List Updated");
-
-            }
-        });
+	doUpdateWormList();
+	//LoadFrame();
+	//redraw();
     });
 
     gotoBtn.addEventListener("click", function () {
         framenumber = prompt("Goto Frame Number");
-        img.onload = function () {
-            //ctx.drawImage(img, 0, 0);
-		drawChannels();
-        };
-        filename = "/wormbot/" + expID + "/GFP" + pad(framenumber) + ".png";
-        img.src = filename;
-        drawRects();
+	LoadFrame();
+        redraw();
 
     });//end add event listener
 
