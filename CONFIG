@@ -40,7 +40,8 @@ sudo mkdir $CGI_DIR #make the password protected CGI-bin
 sudo ln --symbolic $ROOT_DIR $WEB_DIR
 #sudo ln --symbolic -T $ROOT_DIR/experiments $WEB_DIR/experiments
 #sudo ln --symbolic $WEB_DIR /var/www/html/wormbot
-sudo chmod a+rw $WEB_DIR
+sudo chmod a+rwx $WEB_DIR
+sudo chmod a+wrx $CGI_DIR
 sudo echo ,,,,,,, > $ROOT_DIR/RRRjoblist.csv
 sudo chmod a+rw $ROOT_DIR/RRRjoblist.csv
 
@@ -78,6 +79,7 @@ sudo head -n -1 /etc/rc.local > /tmp/temp.rc.local ; mv /tmp/temp.rc.local /etc/
 sudo echo "/wormbot/master_control_program" >> /etc/rc.local
 sudo echo "exit 0" >> /etc/rc.local
 sudo chmod +x /etc/rc.local
+sudo cp rc-local.service /etc/systemd/system/
 sudo systemctl enable rc-local.service
 
 
@@ -89,7 +91,8 @@ then
 fi
 
 
-sudo chmod -R +rw $WEB_DIR
+sudo chmod -R +rwx $WEB_DIR
+sudo chmod +rw $ROOT_DIR/.htpasswd
 
 sudo cp security/apache2.conf /etc/apache2/apache2.conf 
 sudo service apache2 restart
