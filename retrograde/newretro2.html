@@ -23,19 +23,19 @@
 		<div class="nav-content">
 			<ul>
 				<li>
-					<a href="#">Schduler</a>
+					<a href="/cgi-bin/scheduler">Scheduler</a>
 
 				</li>
 				<li>
-					<a href="#">Retrograde</a>
+					<a href="/retrograde/retrograde.html">Retrograde</a>
 
 				</li>
 				<li>
-					<a href="#">ExperimentBrowser</a>
+					<a href="/cgi-bin/experimentbrowser">ExperimentBrowser</a>
 
 				</li>
 				<li>
-					<a href="#">Status</a>
+					<a href="/cgi-bin/wormbotstatus">Status</a>
 
 				</li>
 
@@ -59,6 +59,7 @@
 		<div class="control-panel" id="control-panel">
 
 			<button class="collapsible">Movie Options <span class="expand-mark">+</span></button>
+			
 			<div class="content" id="movie-div">
 				<form action="" method="post" id="updateForm1">
 					<ul>
@@ -70,8 +71,40 @@
 							<label for="stopmovie">Movie End</label>
 							<input type="text" id="stopmovie" name="moviestop" placeholder="type something...">
 						</li>
+							
+						
+					<ul>
+				<li>
+					<label class="radio-container">Brightfield
+						<input type="radio" id="movchan" name="movchan" value="bf">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container">GFP
+						<input type="radio" id="movchan" name="movchan" value="gfp">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container">Cherry
+						<input type="radio" id="movchan" name="movchan" value="cherry">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container">UV
+						<input type="radio" id="movchan" name="movchan" value="uv">
+						<span class="radiomark"></span>
+				</li>
+				
 
+			</ul>
 
+					
+
+						
+						
+		
+								
+				
 
 					</ul>
 					<label class="checkbox-container">Check to build new movie
@@ -80,9 +113,10 @@
 					</label>
 
 				</form>
+			</div>
 				<!-- Check to build new movie<input type="checkbox" id="buildMovie" name="buildMovie"> -->
 				
-			</div>
+			
 			<button class="collapsible">Thresholding <span class="expand-mark">+</span></button>
 			<div class="content" id="threshold-div">
 				<form action="" method="post" id="updateForm2">
@@ -141,9 +175,73 @@
 			</ul>
 							
 			</div>
+			<button class="collapsible">Selection Tools <span class="expand-mark">+</span></button>
+			<div class="content" id="st-div">
 			
-			<a href='javascript:;' onclick='popContourPreview();'>Preview contour</a>
-			<canvas id="preview-canvas" width=1920 height=1080 style="background-color: white;width:100%;height:100%"></canvas>
+				
+					
+
+				Selection Style:
+				<ul>
+					<li>
+					<label class="radio-container">Rectangle
+						<input type="radio" id="selectstyle" name="selectstyle" value="rect">
+						<span class="radiomark"></span>
+				</li>
+
+				<li>
+					<label class="radio-container">Elipse
+						<input type="radio" id="selectstyle" name="selectstyle" value="elipse">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container">Polygon
+						<input type="radio" id="selectstyle" name="selectstyle" value="poly">
+						<span class="radiomark"></span>
+				</li>
+				</ul>
+<hr>
+
+				
+				Selection Target:
+				<ul>
+				<li>
+					<label class="radio-container"><font color=#00ff00>Set Life Span Prediction</font>
+						<input type="radio" id="selecttool" name="selecttool" value="lsp">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container"><font color=#ff00ff>Set Analysis Area</font>
+						<input type="radio" id="selecttool" name="selecttool" value="anal">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container"><font color=#aaaaaa>Set Background Area</font>
+						<input type="radio" id="selecttool" name="selecttool" value="dba">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container"><font color=#00ffff>Define Lawn</font>
+						<input type="radio" id="selecttool" name="selecttool" value="lawn">
+						<span class="radiomark"></span>
+				</li>
+				<li>
+					<label class="radio-container"><font color=#ffffff>Measure</font>
+						<input type="radio" id="selecttool" name="selecttool" value="measure">
+						<span class="radiomark"></span>
+				</li>
+				
+
+			</ul>
+						
+				
+				
+
+			
+							
+			</div>
+			
+			
 		</div>
 
 	</div>

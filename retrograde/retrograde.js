@@ -33,21 +33,57 @@ var temperature=""; //holds the current temperature
 //define rectangle object
 var rect = { x: 0, y: 0, w: 0, h: 0, f: 0 };
 var rects = [];
+var elip = { x: 0, y: 0, w: 0, h: 0, a: 0, f: 0 };
+var elips = [];
+var polyp = { x: 0, y: 0 };
+var polyg = {
+
+	n: 0,
+	
+	polyp: [],
+
+	f: 0,
+
+	
+
+
+};//end polyg object
+
 var deadworm = { x: 0, y: 0, deathframe: 0, number: 0, daysold: -1, minutesold: -1 };
 var deadworms = [];
 var numrects = 0;
+var numelips = 0;
+var elipseangle=0.0;
 var ctx;
 var needtounlock = false;
 var wormlist = [];
 var shiftLock = false;
+var toolstate;
+var toolstyle;
 
 
 
 
-
+function drawElips() {
+	console.log("numelips: " + elips.length);
+    for (i = 0; i < elips.length; i++) {
+        if (framenumber >= elips[i].f) {
+	    ctx.beginPath();
+            ctx.strokeStyle = "magenta";
+            ctx.lineWidth = 3;
+            ctx.ellipse(elips[i].x, elips[i].y, elips[i].w, elips[i].h, elips[i].a, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.font = "30px Arial";
+            ctx.fillStyle = "magenta";
+            ctx.fillText(i, elips[i].x, elips[i].y);
+            ctx.strokeStyle = "green";
+    	}
+     }
+}
 
 
 function drawRects() {
+	ctx.strokeStyle="green";
     for (i = 0; i < rects.length; i++) {
         if (framenumber >= rects[i].f) ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
     }
@@ -67,7 +103,7 @@ function drawDeadworms() {
             ctx.arc(deadworms[i].x, deadworms[i].y, 30, 0, 2 * Math.PI, 0);
             ctx.stroke();
             ctx.font = "30px Arial";
-            ctx.fillStyle = "black";
+            ctx.fillStyle = "red";
             ctx.fillText(i, deadworms[i].x, deadworms[i].y);
             ctx.strokeStyle = "green";
 
@@ -75,6 +111,13 @@ function drawDeadworms() {
 
     }//end for each deadworm
 }//end drawdeadworms
+
+function getToolSelect() {
+	toolstyle = document.querySelector('input[name=selectstyle]:checked').value;
+	console.log("toolstyle: " + toolstyle);
+	toolstate = document.querySelector('input[name=selecttool]:checked').value;
+	console.log("toolstate: " + toolstate);
+}//end getToolSelect
 
 function drawChannels() {
 	var mrect = canvas.getBoundingClientRect();
@@ -86,6 +129,7 @@ function drawChannels() {
 	cherryActive= document.querySelector("#CHERRYchan").checked;
 	uvActive = document.querySelector("#UVchan").checked; 
 	contActive = document.querySelector("#CONTchan").checked; 
+	getToolSelect();
 
 	if (bfActive) ctx.drawImage(img, 0, 0);
 	if (gfpActive) ctx.drawImage(gfpImg, 0, 0);
@@ -254,6 +298,7 @@ function LoadFrame() {
 
     drawChannels();
     drawRects();
+    drawElips();
     drawDeadworms();
     drawExpID();
 
@@ -395,6 +440,15 @@ function deleteObject(x, y) {
         }//end if hit the rectangle
     }
     var j = 0;
+
+	for (i = 0; i < elips.length; i++) {
+
+		if (  ((((x - elips[i].x)**2)/ elips[i].w **2) + (((y - elips[i].y)**2)/ elips[i].h **2)) < 1) {
+			elips.splice(i,1);
+			return;
+		}//end if inside elipse
+
+	}//end for elips
 
     console.log("deadworms length:" + deadworms.length);
     console.log("delete obj x,y:" + x + "," + y);
@@ -722,6 +776,28 @@ $(window).load(function () {
         rects.push(newRect);
     }
 
+   function addNewElipse() {
+        isDown = false;
+        if (shiftLock) return;
+        numelips++;
+        //standardize the rect to positive width and height
+        var swap = 0;
+        if (mouseX - startX < 0) {
+            swap = startX;
+            startX = mouseX;
+            mouseX = swap;
+        }
+        if (mouseY - startY < 0) {
+            swap = startY;
+            startY = mouseY;
+            mouseY = swap;
+        }
+
+        var newelips = { name: numelips, x: startX, y: startY, w: mouseX - startX, h: mouseY - startY, a: elipseangle, f: framenumber };
+        elips.push(newelips);
+    }
+
+
     /*
                 function removeLastWorm(){
             numrects--;
@@ -745,7 +821,8 @@ $(window).load(function () {
         // the drag is over, clear the dragging flag
         switch (e.which) {
             case 1:  // left mouse button
-                addNewRect();
+                if (toolstyle == "rect") addNewRect();
+		 if (toolstyle == "elipse") addNewElipse();
                 break;
             case 2: //middle mouse button
                 // clear the canvas
@@ -780,6 +857,7 @@ $(window).load(function () {
         e.stopPropagation();
 
         var brect = canvas.getBoundingClientRect();
+	
 
         var x_scale = canvas.width / brect.width * parseInt(e.clientX - brect.left);
         var y_scale = canvas.height / brect.height * parseInt(e.clientY - brect.top);
@@ -801,13 +879,38 @@ $(window).load(function () {
 
         // calculate the rectangle width/height based
         // on starting vs current mouse position
-        var width = mouseX - startX;
+       
+	
+	$(document).keydown(function(event) {
+    		if (event.which == "17")
+       		 elipseangle+=0.0001;
+    
+	 });
+
+	
+	var width = mouseX - startX;
         var height = mouseY - startY;
 
         // draw a new rect from the start position
         // to the current mouse position
-        if (isDown) ctx.strokeRect(startX, startY, width, height);
+        if (isDown) {
+
+		if (toolstyle == 'rect') ctx.strokeRect(startX, startY, width, height);
+		else if (toolstyle == 'elipse') {
+
+
+				
+				 ctx.beginPath();
+			    ctx.strokeStyle = "magenta";
+			    ctx.lineWidth = 5;
+				
+			    ctx.ellipse(startX, startY, width, height, elipseangle, 0, 2 * Math.PI);
+			    ctx.closePath()
+			    ctx.stroke();
+			}
+	}//end if dragging
         drawRects();
+	drawElips();
         drawDeadworms();
         drawExpID();
     }
@@ -847,7 +950,11 @@ $(window).load(function () {
 
         //ctx.drawImage(img, 0, 0);
 	drawChannels();
+
+		
+
         drawRects();
+	drawElips();
         drawDeadworms();
         drawExpID();
         drawTemp();
