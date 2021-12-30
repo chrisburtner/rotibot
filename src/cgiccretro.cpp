@@ -147,7 +147,7 @@ void getExperimentTimes(string path, int totalframes){
 			stringstream number;
 			number << setfill('0') << setw(6) << j;
 
-			oss << path << "aligned" << number.str() <<".png";
+			oss << path << "frame" << number.str() <<".png";
 
 		    ss << path << "frame" << number.str() <<".png";
 
@@ -459,7 +459,7 @@ int getNumFrames(string directory){
 
 	stringstream globpattern;
 
-	globpattern  << directory.c_str() << string("aligned*.png");
+	globpattern  << directory.c_str() << string("frame*.png");
 	glob(globpattern.str().c_str(),GLOB_TILDE,NULL,&aligned_result);
 
 	for (unsigned int i=0; i < aligned_result.gl_pathc; i++){
@@ -561,17 +561,17 @@ main(int argc,
       boostfile << "ExpID" << expID << endl;
       BOOST_FOREACH(const ptree::value_type &v, pt.get_child("")) {
 
-    	  boostfile << "x:" <<  v.second.get<int>("x") << ",";
-    	  boostfile << "y:" <<  v.second.get<int>("y") << ",";
-    	  boostfile << "w:" <<  v.second.get<int>("w") << ",";
-    	  boostfile << "h:" <<  v.second.get<int>("h") << ",";
+    	  boostfile << "x:" <<  v.second.get<float>("x") << ",";
+    	  boostfile << "y:" <<  v.second.get<float>("y") << ",";
+    	  boostfile << "w:" <<  v.second.get<float>("w") << ",";
+    	  boostfile << "h:" <<  v.second.get<float>("h") << ",";
     	  boostfile << "f:" <<  v.second.get<int>("f") << endl;
 
     	  //end find the maximum frame number
           boostfile << "4" << endl;
     	  if (v.second.get<int>("f") > max_frame) max_frame= v.second.get<int>("f");
-    	  if (v.second.get<int>("w") <=0 || v.second.get<int>("h") <= 0) continue;
-    	  WormRegion thisworm(v.second.get<int>("x"),v.second.get<int>("y"),v.second.get<int>("w"),v.second.get<int>("h"),v.second.get<int>("f"),v.second.get<int>("name"));
+    	  if (v.second.get<float>("w") <=0 || v.second.get<float>("h") <= 0) continue;
+    	  WormRegion thisworm((int)v.second.get<float>("x"),(int)v.second.get<float>("y"),(int)v.second.get<float>("w"),(int)v.second.get<float>("h"),v.second.get<int>("f"),v.second.get<int>("name"));
     	  worms.push_back(thisworm);
       }//end boostforeach
 
@@ -644,7 +644,7 @@ main(int argc,
 
    		stringstream globpattern;
 
-   		globpattern  << experimentpath.str().c_str() << string("aligned*.png");
+   		globpattern  << experimentpath.str().c_str() << string("frame*.png");
    		glob(globpattern.str().c_str(),GLOB_TILDE,NULL,&aligned_result);
 
    		for (unsigned int i=0; i < aligned_result.gl_pathc; i++){
