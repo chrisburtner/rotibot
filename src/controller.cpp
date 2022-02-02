@@ -7,6 +7,9 @@
 // Description : robot controller for worm lifespans
 //============================================================================
 
+
+#define USE_BASLER true
+
 #include <iostream>
 #include <stdio.h>
 #include <sys/time.h>
@@ -22,6 +25,7 @@
 
 #include <boost/algorithm/string.hpp> 
 #include <boost/lexical_cast.hpp>
+
 
 
 #include <fstream>
@@ -65,6 +69,7 @@ uint8_t *buffer;
 
 using namespace std;
 using namespace LibSerial;
+using namespace boost;
 
 #ifdef USE_BASLER
 	using namespace Pylon;
@@ -823,6 +828,29 @@ public:
 
 	}//end getgain
 
+
+	void writeTimestamp(Mat &thisMat, string filenamepath){
+		
+	    				stringstream textadd;	    				
+	    				stringstream filetime;
+
+				        time_t currtime;
+					time(&currtime);
+					filetime << ctime(&currtime);
+	    				string formattedtime(filetime.str().substr(0,filetime.str().size()-1)); //get the ctime string
+	    				string fileframenumber;
+	    				replace_all(formattedtime,":",".");  //strip out : for FFMPEG compat
+					textadd << filenamepath << " " << formattedtime; //put filename and timestamp into text
+					Point lowerleft(10,thisMat.size().height-10);
+					Point rectlowerleft(5,thisMat.size().height-5);
+					Point rectedge(640,thisMat.size().height-25);
+					rectangle(thisMat,rectlowerleft,rectedge,(0,0,0),-1);
+					putText(thisMat, textadd.str(), lowerleft,FONT_HERSHEY_COMPLEX_SMALL, 0.8,cvScalar(255, 255, 255), 1, CV_AA);
+
+	
+	}//end write time stamp
+
+
 	int capture_frame(int doAlign){
 
 		try {
@@ -949,6 +977,10 @@ public:
 
 
 			if (doAlign == 0) {
+				//write timestamp
+				writeTimestamp(frame_gray, filename.str());				
+
+
 				imwrite(filename.str(), frame_gray, compression_params); //frame vs frame_gray
 				cout << "frame capture" << endl;
 			}
@@ -1600,6 +1632,7 @@ public:
 						filename << directory << "frame" << number.str() << ".png";
 						//no channels to merge, just save it 
 						//CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
+						writeTimestamp(src_gray,filename.str());
 						imwrite(filename.str(), src_gray, compression_params);
 						break;
 
@@ -1609,6 +1642,7 @@ public:
 						channels.push_back(src_gray);//green
 						channels.push_back(allblack);//red
 			   			merge(channels, colorimage);
+						writeTimestamp(colorimage,filename.str());
 						imwrite(filename.str(), colorimage, compression_params);
 						
 						break;	
@@ -1619,6 +1653,7 @@ public:
 						channels.push_back(allblack);//green
 						channels.push_back(allblack);//red
 			   			merge(channels, colorimage);
+						writeTimestamp(colorimage,filename.str());
 						imwrite(filename.str(), colorimage, compression_params);
 
 						break;
@@ -1628,6 +1663,7 @@ public:
 						channels.push_back(allblack);//green
 						channels.push_back(src_gray);//red
 			   			merge(channels, colorimage);
+						writeTimestamp(colorimage,filename.str());
 						imwrite(filename.str(), colorimage, compression_params);
 
 						break;

@@ -72,6 +72,9 @@ experimentuploader: src/experimentuploader.cpp
 plateExplorer: src/plateExplorer.cpp
 	$(CXX) $(CFLAGS) src/plateExplorer.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/plateExplorer
 
+diffcalc: src/diffcalc.cpp
+	$(CXX) $(CFLAGS) src/diffcalc.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/diffcalc
+
 graphmaker: src/graphmaker.cpp
 	$(CXX) $(CFLAGS) src/graphmaker.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/graphmaker
 
@@ -80,7 +83,7 @@ trainingSetExport: src/trainingSetExport.cpp
 
 
 
-all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan timelog framediff
+all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan timelog framediff diffcalc
 
 
 

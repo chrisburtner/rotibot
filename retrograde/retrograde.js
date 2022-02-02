@@ -163,9 +163,12 @@ function drawLock() {
     if (shiftLock) {
 
         ctx.fillText("Bounding Box Disabled", 1000, 30);
+	 document.getElementById("shiftlockerID").innerHTML = "ON";
     } else {
         ctx.fillText("Bounding Box Enabled", 1000, 30);
+	 document.getElementById("shiftlockerID").innerHTML = "OFF";
     }
+   
     
 }
 
@@ -304,6 +307,10 @@ function LoadFrame() {
     drawElips();
     drawDeadworms();
     drawExpID();
+
+	//update the frame field
+	document.getElementById("currframeID").innerHTML = pad(framenumber); 
+	document.getElementById("currexpID").innerHTML = expID; 
 
 }//end load frame
 
@@ -954,7 +961,9 @@ $(window).load(function () {
         //ctx.drawImage(img, 0, 0);
 	drawChannels();
 
-		
+	//update the frame field
+	document.getElementById("currframeID").innerHTML = pad(framenumber); 	
+	document.getElementById("currexpID").innerHTML = expID; 
 
         drawRects();
 	drawElips();
