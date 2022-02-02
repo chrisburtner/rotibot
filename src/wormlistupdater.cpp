@@ -676,8 +676,8 @@ int main(int argc,char **argv){
 			//check to see if the frame exists
 			if (getAgeinDays(v.second.get<int>("deathframe")) == -1) continue; //skip the invalid worm
 			  
-		      	  wormfile  <<  v.second.get<int>("x") << ",";
-		      	  wormfile <<  v.second.get<int>("y") << ",";
+		      	  wormfile  <<  (int)v.second.get<float>("x") << ",";
+		      	  wormfile <<  (int)v.second.get<float>("y") << ",";
 		      	  wormfile  <<  v.second.get<int>("deathframe") << ",";
 		      	  wormfile  <<  v.second.get<int>("number") << ",";
 		      	 
@@ -711,7 +711,7 @@ int main(int argc,char **argv){
 
 	}//end if want to build a new movie
 
-	//if (cgi.queryCheckbox("updatecontours")){
+	if (cgi.queryCheckbox("updatecontours")){
 		stringstream currimgfilename;
 		stringstream number;
 		number << setfill('0') << setw(6) << currframe;
@@ -719,7 +719,7 @@ int main(int argc,char **argv){
 		debugger << "img filename " << currimgfilename.str() << endl;
 		Update_Contours(currimgfilename.str(),lowthresh, highthresh);
 
-	//}//end if update contours
+	}//end if update contours
 
 
 
@@ -732,8 +732,12 @@ int main(int argc,char **argv){
 	ofilename << datapath << expID << "/lifespanoutput_" << expID << ".csv";
 	ifstream ifile(filename.str().c_str());
 	ofstream ofile(ofilename.str().c_str());
+
+	debugger << "out filename: " << ofilename.str() << " descfilename: " << filename.str() << endl;
 	string aline;
-	int c;
+
+	int c=0;
+
 	string dtitle;
 	while (getline(ifile,aline)){
 		switch(c){

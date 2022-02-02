@@ -689,7 +689,7 @@ string getCurrframe(void){
 
     frametime = getFileCreationTime(ss.str());
 
-	return (oss.str());
+	return (ss.str());
 
 }//end getCurrframe
 

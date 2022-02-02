@@ -113,10 +113,13 @@ function drawDeadworms() {
 }//end drawdeadworms
 
 function getToolSelect() {
-	toolstyle = document.querySelector('input[name=selectstyle]:checked').value;
+	
+	toolstyle = $('input[name=selectstyle]:checked').val()
 	console.log("toolstyle: " + toolstyle);
+	/*
 	toolstate = document.querySelector('input[name=selecttool]:checked').value;
 	console.log("toolstate: " + toolstate);
+	*/
 }//end getToolSelect
 
 function drawChannels() {
