@@ -159,13 +159,13 @@ function drawTemp(){
 function drawLock() {
     ctx.font = "30px Arial";
     ctx.fillStyle = "cyan";
-    ctx.clearRect(1000, 0, 1500, 100);
+   // ctx.clearRect(1000, 0, 1500, 100);
     if (shiftLock) {
 
-        ctx.fillText("Bounding Box Disabled", 1000, 30);
+       // ctx.fillText("Bounding Box Disabled", 1000, 30);
 	 document.getElementById("shiftlockerID").innerHTML = "ON";
     } else {
-        ctx.fillText("Bounding Box Enabled", 1000, 30);
+       // ctx.fillText("Bounding Box Enabled", 1000, 30);
 	 document.getElementById("shiftlockerID").innerHTML = "OFF";
     }
    
@@ -669,7 +669,7 @@ $(window).load(function () {
     });
 
     gotoBtn.addEventListener("click", function () {
-        framenumber = prompt("Goto Frame Number");
+        framenumber = parseInt(prompt("Goto Frame Number"));
 	LoadFrame();
         redraw();
 

@@ -519,16 +519,16 @@ void loadWorms(string filename){
 }//end load worms
 
 
-string buildMovie(string filename, int startframe, int endframe){
+string buildMovie(string filename, int startframe, int endframe, string movChannel, bool drawDeadWorms){
 	stringstream oss;
 	stringstream ffmpeg;
 	stringstream lastcomp;
 
 
 	ffmpeg << "./ffmpeg -y -f image2 -start_number " << startframe
-		<<" -i "<< filename << "aligned%06d.png ";
+		<<" -i "<< filename << movChannel << "%06d.png ";
 
-	if (wormlist.size() != 0) {
+	if (wormlist.size() != 0 && drawDeadWorms) {
 
 		for (int i=0; i < wormlist.size(); i++){
 			ffmpeg << " -i /var/www/html/wormbot/img/dead.png "; //load the worm circle for each dead worm
@@ -564,7 +564,7 @@ string buildMovie(string filename, int startframe, int endframe){
 		ffmpeg << " \"";
 	}
 
-	ffmpeg << " -q:v 1 -vframes " << (endframe+1)-startframe << " " << filename << expID <<".avi 2>&1 | tee /var/www/robot_data/ffmpegstdout.txt" << endl;
+	ffmpeg << " -q:v 1 -vframes " << (endframe+1)-startframe << " " << filename << expID <<"_" << movChannel << ".avi 2>&1 | tee /var/www/robot_data/ffmpegstdout.txt" << endl;
 
 	system(ffmpeg.str().c_str());
 
@@ -627,18 +627,25 @@ int main(int argc,char **argv){
 	 int moviestart,moviestop=0;
 	 int highthresh,lowthresh =0;
 	 int currframe=837;
+	string mchan="bf";
 
 	try {
 
 
 	      string foo = cgi("deadworms");
 	      expID = atoi(string(cgi("expID")).c_str());
-	      moviestart = atoi(string(cgi("startmovie")).c_str());
-	      moviestop = atoi(string(cgi("stopmovie")).c_str());
+	      moviestart = atoi(string(cgi("moviestart")).c_str());
+	      moviestop = atoi(string(cgi("moviestop")).c_str());
 	      highthresh = atoi(string(cgi("highthresh")).c_str());
     	  lowthresh = atoi(string(cgi("lowthresh")).c_str());
     	  currframe = atoi(string(cgi("currframe")).c_str());
-		debugger << "L:" << lowthresh << " " << cgi("lowthresh") << " H: " << highthresh  << " " << cgi("highthresh") <<  "EXPID:" << expID << " movie start:" << moviestart << endl;
+		form_iterator fi = cgi.getElement("movchan");  
+		   if( fi != cgi.getElements().end()) {  
+		      debugger << "Radio box selected: " << **fi << endl; 
+			mchan = **fi; 
+		   }
+		debugger << "L:" << lowthresh << " " << cgi("lowthresh") << " H: " << highthresh  << " " << cgi("highthresh") <<  
+				"EXPID:" << expID << " movie start:" << moviestart << " mchan:" << mchan << endl;
 
 		time_t logtime;
 		time(&logtime);
@@ -707,7 +714,7 @@ int main(int argc,char **argv){
 
 	if (cgi.queryCheckbox("buildMovie")){
 
-		buildMovie(wormpath.str(),moviestart,moviestop);
+		buildMovie(wormpath.str(),moviestart,moviestop, mchan, cgi.queryCheckbox("drawDead") );
 
 	}//end if want to build a new movie
 
