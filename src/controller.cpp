@@ -8,7 +8,6 @@
 //============================================================================
 
 
-#define USE_BASLER true
 
 #include <iostream>
 #include <stdio.h>
