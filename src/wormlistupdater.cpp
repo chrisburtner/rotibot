@@ -634,8 +634,8 @@ int main(int argc,char **argv){
 
 	      string foo = cgi("deadworms");
 	      expID = atoi(string(cgi("expID")).c_str());
-	      moviestart = atoi(string(cgi("moviestart")).c_str());
-	      moviestop = atoi(string(cgi("moviestop")).c_str());
+	      moviestart = atoi(string(cgi("startmovie")).c_str());
+	      moviestop = atoi(string(cgi("stopmovie")).c_str());
 	      highthresh = atoi(string(cgi("highthresh")).c_str());
     	  lowthresh = atoi(string(cgi("lowthresh")).c_str());
     	  currframe = atoi(string(cgi("currframe")).c_str());
@@ -645,7 +645,7 @@ int main(int argc,char **argv){
 			mchan = **fi; 
 		   }
 		debugger << "L:" << lowthresh << " " << cgi("lowthresh") << " H: " << highthresh  << " " << cgi("highthresh") <<  
-				"EXPID:" << expID << " movie start:" << moviestart << " mchan:" << mchan << endl;
+				"EXPID:" << expID << " movie start:" << moviestart << " movie stop:" << moviestop << " mchan:" << mchan << endl;
 
 		time_t logtime;
 		time(&logtime);

@@ -522,6 +522,7 @@ function doUpdateWormList() {
     var startmovie = formData1.get('moviestart');
     var stopmovie = formData1.get('moviestop');
     var checkboxbuildmovie = formData1.get('buildMovie');
+    var moviechannel = formData1.get('mchan');	
 
     var formE2 = document.forms.updateForm2;
     var formData2 = new FormData(formE2);
@@ -535,7 +536,7 @@ function doUpdateWormList() {
         url: "/cgi-bin/wormlistupdater",
         data: {
             "deadworms": deadwormsstring, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
-            "buildMovie": checkboxbuildmovie, "highthresh": highthresh,
+            "buildMovie": checkboxbuildmovie, "highthresh": highthresh, "mchan" : moviechannel,
             "lowthresh": lowthresh, "checkboxUpdateContours": checkboxUpdateContours,
             "currframe": framenumber
         },
