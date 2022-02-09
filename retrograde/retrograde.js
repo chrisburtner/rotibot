@@ -31,7 +31,7 @@ var lifespanrequested = false;  //hold a flag to see if you asked for the lifesp
 var temperature=""; //holds the current temperature
 
 //define rectangle object
-var rect = { x: 0, y: 0, w: 0, h: 0, f: 0 };
+var rect = { x: 0, y: 0, w: 0, h: 0, f: 0 , t: 0}; // x,y, width, height,frame, type [ lifespan, analysis, background ]
 var rects = [];
 var elip = { x: 0, y: 0, w: 0, h: 0, a: 0, f: 0 };
 var elips = [];
@@ -51,6 +51,7 @@ var polyg = {
 
 var deadworm = { x: 0, y: 0, deathframe: 0, number: 0, daysold: -1, minutesold: -1 };
 var deadworms = [];
+var analrects = [];
 var numrects = 0;
 var numelips = 0;
 var elipseangle=0.0;
@@ -65,7 +66,7 @@ var toolstyle;
 
 
 function drawElips() {
-	console.log("numelips: " + elips.length);
+	console.log("numelipses: " + elips.length);
     for (i = 0; i < elips.length; i++) {
         if (framenumber >= elips[i].f) {
 	    ctx.beginPath();
@@ -83,11 +84,34 @@ function drawElips() {
 
 
 function drawRects() {
-	ctx.strokeStyle="green";
+	
     for (i = 0; i < rects.length; i++) {
-        if (framenumber >= rects[i].f) ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+
+	switch (rects[i].t){
+		
+
+		case "analysis":
+			ctx.strokeStyle="magenta";
+			 ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+		break;
+
+		case "background":
+			ctx.strokeStyle="aqua";
+			 ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+		break;
+
+		default:
+		case "lifespan":
+			 ctx.strokeStyle="green";
+		       	 if (framenumber >= rects[i].f){
+				 ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+			}//end if visible for lifespan
+		break;
+
+	}//end switch
     }
-}
+}//end draw rects
+
 
 function drawDeadworms() {
     // console.log("drawingdeadworms");
@@ -116,10 +140,9 @@ function getToolSelect() {
 	
 	toolstyle = $('input[name=selectstyle]:checked').val()
 	console.log("toolstyle: " + toolstyle);
-	/*
-	toolstate = document.querySelector('input[name=selecttool]:checked').value;
+	toolstate = $('input[name=selectstate]:checked').val()
 	console.log("toolstate: " + toolstate);
-	*/
+	
 }//end getToolSelect
 
 function drawChannels() {
@@ -766,7 +789,7 @@ $(window).load(function () {
 
     }
 
-    function addNewRect() {
+    function addNewRect(theType) {
         isDown = false;
         if (shiftLock) return;
         numrects++;
@@ -783,7 +806,7 @@ $(window).load(function () {
             mouseY = swap;
         }
 
-        var newRect = { name: numrects, x: startX, y: startY, w: mouseX - startX, h: mouseY - startY, f: framenumber };
+        var newRect = { name: numrects, x: startX, y: startY, w: mouseX - startX, h: mouseY - startY, f: framenumber, t: theType };
         rects.push(newRect);
     }
 
@@ -832,7 +855,10 @@ $(window).load(function () {
         // the drag is over, clear the dragging flag
         switch (e.which) {
             case 1:  // left mouse button
-                if (toolstyle == "rect") addNewRect();
+                if (toolstyle == "rect"){
+			addNewRect(toolstate);
+
+		}//end if rect 
 		 if (toolstyle == "elipse") addNewElipse();
                 break;
             case 2: //middle mouse button
@@ -906,7 +932,23 @@ $(window).load(function () {
         // to the current mouse position
         if (isDown) {
 
-		if (toolstyle == 'rect') ctx.strokeRect(startX, startY, width, height);
+		if (toolstyle == 'rect') {
+			switch(toolstate) {
+				case 'lifespan':
+					 ctx.strokeStyle = "green";
+				break;
+				case 'analysis':
+					 ctx.strokeStyle = "magenta";
+				break;
+				case 'background':
+					 ctx.strokeStyle = "aqua";
+				break;
+				
+			}//end switch
+			ctx.strokeRect(startX, startY, width, height);
+
+			
+		}
 		else if (toolstyle == 'elipse') {
 
 
