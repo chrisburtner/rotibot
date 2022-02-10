@@ -71,29 +71,15 @@
 							<label for="stopmovie">Movie End</label>
 							<input type="text" id="moviestop" name="moviestop" placeholder="type something...">
 						</li>
+						
+						Movie Channel: <select id="movchan" name="movchan">
+    					<option value="bf">Bright Field</option>
+					<option value="gfp">GFP</option>
+					<option value="cherry">Cherry</option>
+					<option value="uv">UV</option></select>
 							
 						
-					<ul>
-				<li>
-					<label class="radio-container">Brightfield
-						<input type="radio" id="movchan" name="movchan" value="bf">
-						<span class="radiomark"></span>
-				</li>
-				<li>
-					<label class="radio-container">GFP
-						<input type="radio" id="movchan" name="movchan" value="gfp">
-						<span class="radiomark"></span>
-				</li>
-				<li>
-					<label class="radio-container">Cherry
-						<input type="radio" id="movchan" name="movchan" value="cherry">
-						<span class="radiomark"></span>
-				</li>
-				<li>
-					<label class="radio-container">UV
-						<input type="radio" id="movchan" name="movchan" value="uv">
-						<span class="radiomark"></span>
-				</li>
+				
 				
 
 			</ul>
@@ -195,11 +181,13 @@
 						<span class="radiomark"></span>
 				</li>
 				<li>
-					<label class="radio-container">Polygon
-						<input type="radio" id="selectstyle" name="selectstyle" value="poly">
+					<label class="radio-container">Fixed Size Rect
+						<input type="radio" id="selectstyle" name="selectstyle" value="fixed">
 						<span class="radiomark"></span>
 				</li>
 				</ul>
+				Width <input type="text" id="fixedW" name="fixedW" value="100"> <P>
+				Heigth <input type="text" id="fixedH" name="fixedH" value="100"> 
 <hr>
 
 				
@@ -213,10 +201,11 @@
 				<li>
 					<label class="radio-container"><font color=#ff00ff>Set Analysis Area</font>
 						<input type="radio" id="selectstate" name="selectstate" value="analysis">
+						
 						<span class="radiomark"></span>
 				</li>
 				<li>
-					<label class="radio-container"><font color=#aaaaaa>Set Background Area</font>
+					<label class="radio-container"><font color=#00ffff>Set Background Area</font>
 						<input type="radio" id="selectstate" name="selectstate" value="background">
 						<span class="radiomark"></span>
 				</li>
@@ -232,9 +221,15 @@
 				</li>
 				
 
-			</ul>
-						
-				
+			</ul
+			<hr>
+			<font color=#ff00ff>RegionID<input type="text" id="analID" name="analID" value="0"></input><p>
+			Analyze Channel: <select id="analChan" name="analChan">
+    					<option value="bf">Bright Field</option>
+					<option value="gfp">GFP</option>
+					<option value="cherry">Cherry</option>
+					<option value="uv">UV</option></select>
+			</font>
 				
 
 			
@@ -248,7 +243,7 @@
 
 	<div id="main">
 		<span id="btn-sidebar" class="btn-sidebar" onclick="controlSideBar()">&#60;</span>
-		<span style="font-size:25px;padding-left:10px;">Retrograde | Current Frame:<i id="currframeID"> 000000 </i> | Current Experiment:<i id="currexpID"> 000000 </i> | Frame Move: <i id="shiftlockerID">OFF</i></span>
+		<span style="font-size:25px;padding-left:10px;">Retrograde | Current Frame:<i id="currframeID"> 000000 </i> | Experiment ID:<i id="currexpID"> 000000 </i> | Frame Move: <i id="shiftlockerID">OFF</i> | Zoom: <i id="zoomID"> 1.05 </i> </span>
 		<div class="guide">
 			Guide
 			<span class="guide_text">

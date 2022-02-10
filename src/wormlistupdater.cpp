@@ -329,6 +329,12 @@ vector <Worm> wormlist;
 
 // F U N C T I O N S
 
+string pad(int number){
+	stringstream num;
+	num << setfill('0') << setw(6) << number;
+	return num.str();
+
+}//end pad
 
 static void on_trackbar( int, void* )
 {
@@ -604,7 +610,79 @@ string printWormLifespan(string title){
 }//end printwormlifespan
 
 
+string getStats(int x, int y, int w, int h, int f, string chan, unsigned char bgv) {
 
+	stringstream ss,filename;
+
+	filename << datapath << expID << "/";
+	
+	if (chan == string("gfp")) filename << "GFP" << pad(f) << ".png";
+	if (chan == string("bf")) filename << "frame" << pad(f) << ".png";
+	if (chan == string("cherry")) filename << "CHERRY" << pad(f) << ".png";
+	if (chan == string("uv")) filename << "UV" << pad(f) << ".png";
+
+	//debugger << "arect filename:" << filename.str() << endl;
+	
+	Mat thisImg = imread(filename.str());
+	Rect rec(x,y,w,h);
+	Mat recIm = thisImg(rec).clone(); //clone out the Rect
+
+	if(chan== string("bf")) {
+
+
+		double min,max;
+
+		//output min and max
+		minMaxLoc(recIm, &min, &max);
+		ss << min << "," << max << ",";
+
+
+		//output mean
+		ss << mean(recIm)[0] << ",";
+
+
+		//output sum area
+		ss << sum(recIm)[0] << ",";
+
+		
+		 int histSize = 256; // bin size
+		 float range[] = { 0, 256} ;
+		 const float* histRange = { range };
+
+		 bool uniform = true;
+		 bool accumulate = false;
+
+		 Mat hist;
+
+		 int channels[] = {0};
+
+		 /// Compute the histograms:
+		 calcHist( &recIm, 1, channels, Mat(), hist, 1, &histSize, &histRange, uniform, accumulate );
+
+		 //output histogram
+		 //0-255
+		for( int i = 0; i < histSize; i++ ){
+			ss << hist.at<float>(i) << ",";
+
+		}//end for each value
+		return ss.str();
+		
+	}//end if brightfield
+	/*
+	    vector<Mat> bgr_planes;
+	    split( recIm, bgr_planes );
+	    int histSize = 256;
+	    float range[] = { 0, 256 }; //the upper boundary is exclusive
+	    const float* histRange[] = { range };
+	    bool uniform = true, accumulate = false;
+	    Mat b_hist, g_hist, r_hist;
+	    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+	    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+	    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+	*/
+	return ss.str();
+
+}//end getStats
 
 
 
@@ -628,11 +706,13 @@ int main(int argc,char **argv){
 	 int highthresh,lowthresh =0;
 	 int currframe=837;
 	string mchan="bf";
+	unsigned char bg = 0; //hold the background value
 
 	try {
 
 
 	      string foo = cgi("deadworms");
+	      string bar = cgi("analrects");	
 	      expID = atoi(string(cgi("expID")).c_str());
 	      moviestart = atoi(string(cgi("startmovie")).c_str());
 	      moviestop = atoi(string(cgi("stopmovie")).c_str());
@@ -696,6 +776,58 @@ int main(int argc,char **argv){
 		   }//end boostforeach
 
 		  wormfile.close();
+
+
+		//read in analysis rectangles
+			  stringstream rectfilename;
+			  rectfilename << datapath << expID << "/arects.csv";
+		    	  ofstream rfile(rectfilename.str().c_str());
+		     	  stringstream Rreadcgi;
+			  Rreadcgi << bar;
+
+			  ptree rpt;
+			  read_json (Rreadcgi, rpt);
+
+			   BOOST_FOREACH(const ptree::value_type &v, rpt.get_child("")) {
+				
+			  }//end find background if it exists first
+
+			  BOOST_FOREACH(const ptree::value_type &v, rpt.get_child("")) {
+				  
+				//check to see if the frame exists
+				if (getAgeinDays(v.second.get<int>("f")) == -1) continue; //skip the invalid rects
+				  	  int x = (int)v.second.get<float>("x");
+					  int y = (int)v.second.get<float>("y");
+					  int w = (int)v.second.get<float>("w");
+					  int h = (int)v.second.get<float>("h");
+					  int f = v.second.get<int>("f");
+					  string c = v.second.get<string>("c");
+				      	  rfile  <<  x << ",";
+				      	  rfile <<  y << ",";
+					  rfile  <<  w << ",";
+				      	  rfile <<  h << ",";
+				      	  rfile  <<  f << ",";
+				      	  rfile  <<  v.second.get<string>("id") << ",";
+					  rfile  <<  c << ",";
+				      	 
+			      		  rfile <<   getAgeinDays(f) << ",";
+			      		  rfile <<   getAgeinMinutes(f) << ",";
+
+					  rfile << getStats(x,y,w,h,f,c,bg);
+
+					  rfile << endl;
+			      	 
+
+
+			   }//end boostforeach
+
+		//	Rect rec(x,y,w,h);
+		//frames.push_back(thisImg(rec).clone());
+
+			  rfile.close();
+
+
+		//end analysis rects
 
 
 

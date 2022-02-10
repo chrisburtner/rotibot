@@ -29,9 +29,10 @@ var serverLocked = false; //the server busy lock
 var totalframes = 0; //hold the total number of frames from description.txt
 var lifespanrequested = false;  //hold a flag to see if you asked for the lifespan to be updated
 var temperature=""; //holds the current temperature
+var currzoom=1; //holds the current zoom
 
 //define rectangle object
-var rect = { x: 0, y: 0, w: 0, h: 0, f: 0 , t: 0}; // x,y, width, height,frame, type [ lifespan, analysis, background ]
+var rect = { x: 0, y: 0, w: 0, h: 0, f: 0 , t: 0, id: 0, c: 0}; // x,y, width, height,frame, type [ lifespan, analysis, background ], identifier, channel
 var rects = [];
 var elip = { x: 0, y: 0, w: 0, h: 0, a: 0, f: 0 };
 var elips = [];
@@ -91,8 +92,14 @@ function drawRects() {
 		
 
 		case "analysis":
-			ctx.strokeStyle="magenta";
-			 ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+			 if (framenumber == rects[i].f){
+				ctx.strokeStyle="magenta";
+				 ctx.strokeRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+				ctx.font = "30px Arial";
+				ctx.fillStyle="magenta";
+		                ctx.fillText(rects[i].id, rects[i].x , rects[i].y-2 );
+				
+			}
 		break;
 
 		case "background":
@@ -330,15 +337,19 @@ function LoadFrame() {
     drawElips();
     drawDeadworms();
     drawExpID();
-
-	//update the frame field
-	document.getElementById("currframeID").innerHTML = pad(framenumber); 
-	document.getElementById("currexpID").innerHTML = expID; 
+    updateFrameField();
+	
 
 }//end load frame
 
 
+function updateFrameField() {
+	//update the frame field
+	document.getElementById("currframeID").innerHTML = pad(framenumber); 
+	document.getElementById("currexpID").innerHTML = expID; 
+	document.getElementById("zoomID").innerHTML = currzoom.toPrecision(3); 
 
+}//end update frame field
 
 
 document.onkeydown = function (e) {
@@ -408,7 +419,7 @@ function getLastFile() {
 function checkLock() {
     //check the server lock to see if it's ready
     $.ajax({
-        url: '/wormbot/serverlock.lock',
+        url: '/wormbot/serverlock.lock?v=' + Math.random() ,
         type: 'HEAD',
         error: function () {
             serverLocked = false;
@@ -442,7 +453,7 @@ function getMousePos(canvas, evt) {
     return {
         x: evt.clientX - brect.left,
         y: evt.clientY - brect.top
-    };var url = "/wormbot/" + expID + "/current_contrast.png?v=" + rnum;
+    };var url = "/wormbot/" + expID + "/current_contrast.png?v=" + Math.random();
 
 }//end get mouse position
 
@@ -553,14 +564,19 @@ function doUpdateWormList() {
     lowthresh = formData2.get('lowerthresh');
     var checkboxUpdateContours = formData2.get('updatecontours');
 
+	 var analrects  = rects.filter(arec => arec.t === 'analysis');
+		console.log(analrects);
+            var jsonAnalRects = JSON.stringify(analrects);
+		console.log(jsonAnalRects);
+
 
     $.ajax({
         type: "POST",
         url: "/cgi-bin/wormlistupdater",
         data: {
-            "deadworms": deadwormsstring, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
+            "deadworms": deadwormsstring, "analrects": jsonAnalRects, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
             "buildMovie": checkboxbuildmovie, "highthresh": highthresh, "mchan" : moviechannel,
-            "lowthresh": lowthresh, "checkboxUpdateContours": checkboxUpdateContours,
+            "lowthresh": lowthresh, "updatecontours": checkboxUpdateContours,
             "currframe": framenumber
         },
         success: function () {
@@ -568,7 +584,7 @@ function doUpdateWormList() {
             //alert(data);
             alert("Worm List Updated");
 	    LoadFrame();
-	    redraw();		
+	    //redraw();		
 
         }
     });
@@ -701,7 +717,10 @@ $(window).load(function () {
 
     lifespanBtn.addEventListener("click", function () {
         if (serverLocked == false) {
-            var outputRects = JSON.stringify(rects);
+	    var liferects  = rects.filter(arec => arec.t === 'lifespan');
+		console.log(liferects);
+            var outputRects = JSON.stringify(liferects);
+		console.log(outputRects);
             $.ajax({
                 type: "POST",
                 url: "/cgi-bin/cgiccretro",
@@ -715,7 +734,7 @@ $(window).load(function () {
             // $('#btn').addClass("followed btn-locked");
             // $('#btn').html("Processing...Please wait");
             $('#loader1').css("display", "inline-block");
-            console.log(0)
+            console.log(liferects);
             needtounlock = true;
 
         }//end if not locked
@@ -792,21 +811,40 @@ $(window).load(function () {
     function addNewRect(theType) {
         isDown = false;
         if (shiftLock) return;
+	
         numrects++;
         //standardize the rect to positive width and height
         var swap = 0;
-        if (mouseX - startX < 0) {
-            swap = startX;
-            startX = mouseX;
-            mouseX = swap;
-        }
-        if (mouseY - startY < 0) {
-            swap = startY;
-            startY = mouseY;
-            mouseY = swap;
-        }
+	var rwidth=0;
+	var rheight=0;
 
-        var newRect = { name: numrects, x: startX, y: startY, w: mouseX - startX, h: mouseY - startY, f: framenumber, t: theType };
+	if (toolstyle == "rect"){
+		if (mouseX - startX < 0) {
+		    swap = startX;
+		    startX = mouseX;
+		    mouseX = swap;
+		}
+		rwidth = mouseX - startX;
+		if (mouseY - startY < 0) {
+		    swap = startY;
+		    startY = mouseY;
+		    mouseY = swap;
+		}
+		rheight = mouseY - startY
+
+		if (mouseX - startX == 0 || mouseY - startY == 0) return; //no zero area rectangle allowed
+	}//end if rect 
+	else if (toolstyle== "fixed"){
+		rwidth = Math.abs(parseInt(document.getElementById("fixedW").value));
+		rheight = Math.abs(parseInt(document.getElementById("fixedH").value));
+
+	}//end if fixed
+	 
+
+	var rectID = document.getElementById("analID").value;
+	var rectChan = document.getElementById("analChan").value;  
+
+        var newRect = { name: numrects, x: startX, y: startY, w: rwidth, h: rheight, f: framenumber, t: theType, id: rectID, c: rectChan };
         rects.push(newRect);
     }
 
@@ -855,7 +893,7 @@ $(window).load(function () {
         // the drag is over, clear the dragging flag
         switch (e.which) {
             case 1:  // left mouse button
-                if (toolstyle == "rect"){
+                if (toolstyle == "rect" || toolstyle == "fixed"){
 			addNewRect(toolstate);
 
 		}//end if rect 
@@ -924,15 +962,25 @@ $(window).load(function () {
     
 	 });
 
-	
-	var width = mouseX - startX;
-        var height = mouseY - startY;
+	var width;
+	var height;
+
+
+	if (toolstyle == 'rect') {
+		width = mouseX - startX;
+		height = mouseY - startY;
+	} else if (toolstyle == 'fixed') {
+		width = Math.abs(parseInt(document.getElementById("fixedW").value));
+		height = Math.abs(parseInt(document.getElementById("fixedH").value));
+		startX= mouseX;
+		startY=mouseY;
+	}//end if fixed
 
         // draw a new rect from the start position
         // to the current mouse position
         if (isDown) {
 
-		if (toolstyle == 'rect') {
+		if (toolstyle == 'rect' || toolstyle == 'fixed') {
 			switch(toolstate) {
 				case 'lifespan':
 					 ctx.strokeStyle = "green";
@@ -1005,8 +1053,8 @@ $(window).load(function () {
 	drawChannels();
 
 	//update the frame field
-	document.getElementById("currframeID").innerHTML = pad(framenumber); 	
-	document.getElementById("currexpID").innerHTML = expID; 
+	updateFrameField();
+	
 
         drawRects();
 	drawElips();
@@ -1060,6 +1108,8 @@ $(window).load(function () {
         var pt = ctx.transformedPoint(lastX, lastY);
         ctx.translate(pt.x, pt.y);
         var factor = Math.pow(scaleFactor, clicks);
+	//console.log(factor * currzoom);
+	currzoom = currzoom * factor;
         ctx.scale(factor, factor);
         ctx.translate(-pt.x, -pt.y);
         redraw();
