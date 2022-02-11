@@ -67,7 +67,7 @@ var toolstyle;
 
 
 function drawElips() {
-	console.log("numelipses: " + elips.length);
+	//console.log("numelipses: " + elips.length);
     for (i = 0; i < elips.length; i++) {
         if (framenumber >= elips[i].f) {
 	    ctx.beginPath();
@@ -146,9 +146,9 @@ function drawDeadworms() {
 function getToolSelect() {
 	
 	toolstyle = $('input[name=selectstyle]:checked').val()
-	console.log("toolstyle: " + toolstyle);
+	//console.log("toolstyle: " + toolstyle);
 	toolstate = $('input[name=selectstate]:checked').val()
-	console.log("toolstate: " + toolstate);
+	//console.log("toolstate: " + toolstate);
 	
 }//end getToolSelect
 
@@ -556,13 +556,17 @@ function doUpdateWormList() {
     var startmovie = formData1.get('moviestart');
     var stopmovie = formData1.get('moviestop');
     var checkboxbuildmovie = formData1.get('buildMovie');
-    var moviechannel = formData1.get('mchan');	
+    var moviechannel = formData1.get('mchan');
+    var mres = formData1.get('mres');	
+    var drawDeadWorms = formData1.get('drawDead');	
+	//console.log("movie channel: " + moviechannel);	
 
     var formE2 = document.forms.updateForm2;
     var formData2 = new FormData(formE2);
     highthresh = formData2.get('upperthresh');
     lowthresh = formData2.get('lowerthresh');
     var checkboxUpdateContours = formData2.get('updatecontours');
+    
 
 	 var analrects  = rects.filter(arec => arec.t === 'analysis');
 		console.log(analrects);
@@ -577,7 +581,7 @@ function doUpdateWormList() {
             "deadworms": deadwormsstring, "analrects": jsonAnalRects, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
             "buildMovie": checkboxbuildmovie, "highthresh": highthresh, "mchan" : moviechannel,
             "lowthresh": lowthresh, "updatecontours": checkboxUpdateContours,
-            "currframe": framenumber
+            "currframe": framenumber, "drawDead": drawDeadWorms, "mres": mres
         },
         success: function () {
 

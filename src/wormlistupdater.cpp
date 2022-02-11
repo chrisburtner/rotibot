@@ -524,12 +524,43 @@ void loadWorms(string filename){
      }//end while inputlines
 }//end load worms
 
+string getChannelName(string name){
+	if(name =="gfp") return string("GFP");
+	if(name =="bf") return string("frame");
+	if(name =="cherry") return string("CHERRY");
+	if(name =="uv") return string("UV");
+	
+	return string("notfound");
+}//end getCHannelName
 
-string buildMovie(string filename, int startframe, int endframe, string movChannel, bool drawDeadWorms){
+string getFFMPEGResolution(string name, bool docomplex){
+	if (!docomplex){
+		if(name =="1080") return string(" -vf scale=-1:1080 ");
+		if(name =="720") return string(" -vf scale=-1:720 ");
+		if(name =="480") return string(" -vf scale=-1:480 ");
+		if(name =="full") return string(" ");
+	}
+	//complex option
+	if(name =="1080") return string(" scale=-1:1080 ");
+	if(name =="720") return string(" scale=-1:720 ");
+	if(name =="480") return string(" scale=-1:480 ");
+	if(name =="full") return string(" scale=-1:-1 ");
+	
+
+	
+	return string(" ");
+
+
+}//end getFFMPEGResolution
+
+string buildMovie(string filename, int startframe, int endframe, string movChannel, bool drawDeadWorms, string mres){
 	stringstream oss;
 	stringstream ffmpeg;
 	stringstream lastcomp;
 
+	movChannel = getChannelName(movChannel);
+	mres = getFFMPEGResolution(mres, drawDeadWorms);
+	
 
 	ffmpeg << "./ffmpeg -y -f image2 -start_number " << startframe
 		<<" -i "<< filename << movChannel << "%06d.png ";
@@ -563,14 +594,19 @@ string buildMovie(string filename, int startframe, int endframe, string movChann
 			if (i + 1 < wormlist.size()) {
 				lastcomp << "[tmp" << i <<"] ";
 				ffmpeg << lastcomp.str() << ";";
-			}
+			} else { //last entry
+				lastcomp << "[tmp" << i <<"] ";
+				ffmpeg << lastcomp.str() << ";" << lastcomp.str() << mres << "[out]\" -map \"[out]\" ";
+			}//else is last one
 
 		}
-
-		ffmpeg << " \"";
+		
+		//ffmpeg << " \"";
 	}
 
-	ffmpeg << " -q:v 1 -vframes " << (endframe+1)-startframe << " " << filename << expID <<"_" << movChannel << ".avi 2>&1 | tee /var/www/robot_data/ffmpegstdout.txt" << endl;
+	ffmpeg << " -q:v 1 -vframes " << (endframe+1)-startframe << " ";
+	if (!drawDeadWorms) ffmpeg << mres;
+	ffmpeg << filename << expID <<"_" << movChannel << ".avi 2>&1 | tee /var/www/robot_data/ffmpegstdout.txt" << endl;
 
 	system(ffmpeg.str().c_str());
 
@@ -705,7 +741,7 @@ int main(int argc,char **argv){
 	 int moviestart,moviestop=0;
 	 int highthresh,lowthresh =0;
 	 int currframe=837;
-	string mchan="bf";
+	string mchan="";
 	unsigned char bg = 0; //hold the background value
 
 	try {
@@ -719,11 +755,8 @@ int main(int argc,char **argv){
 	      highthresh = atoi(string(cgi("highthresh")).c_str());
     	  lowthresh = atoi(string(cgi("lowthresh")).c_str());
     	  currframe = atoi(string(cgi("currframe")).c_str());
-		form_iterator fi = cgi.getElement("movchan");  
-		   if( fi != cgi.getElements().end()) {  
-		      debugger << "Radio box selected: " << **fi << endl; 
-			mchan = **fi; 
-		   }
+		mchan = cgi("mchan");  
+		   
 		debugger << "L:" << lowthresh << " " << cgi("lowthresh") << " H: " << highthresh  << " " << cgi("highthresh") <<  
 				"EXPID:" << expID << " movie start:" << moviestart << " movie stop:" << moviestop << " mchan:" << mchan << endl;
 
@@ -846,7 +879,7 @@ int main(int argc,char **argv){
 
 	if (cgi.queryCheckbox("buildMovie")){
 
-		buildMovie(wormpath.str(),moviestart,moviestop, mchan, cgi.queryCheckbox("drawDead") );
+		buildMovie(wormpath.str(),moviestart,moviestop, mchan, cgi.queryCheckbox("drawDead"), cgi("mres") );
 
 	}//end if want to build a new movie
 

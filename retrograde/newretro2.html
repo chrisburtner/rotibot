@@ -71,18 +71,23 @@
 							<label for="stopmovie">Movie End</label>
 							<input type="text" id="moviestop" name="moviestop" placeholder="type something...">
 						</li>
-						
-						Movie Channel: <select id="movchan" name="movchan">
-    					<option value="bf">Bright Field</option>
-					<option value="gfp">GFP</option>
-					<option value="cherry">Cherry</option>
-					<option value="uv">UV</option></select>
-							
-						
-				
-				
+						<li>
+						Movie Channel: <select id="mchan" name="mchan">
+	    					<option value="bf">Bright Field</option>
+						<option value="gfp">GFP</option>
+						<option value="cherry">Cherry</option>
+						<option value="uv">UV</option></select>
 
-			</ul>
+						</li>
+						<li>
+						Output Resolution: <select id="mres" name="mres">
+						<option value="full">Full</option>
+	    					<option value="1080">1920x1080</option>
+						<option value="720">1280x720</option>
+						<option value="480">640x480</option>
+						</select>
+
+						</li>
 
 					
 
@@ -92,11 +97,17 @@
 								
 				
 
-					</ul>
+					
+					<label class="checkbox-container">Draw dead worm calls
+						<input type="checkbox" id="drawDead" name="drawDead">
+						<span class="checkmark"></span>
+					</label>
+
 					<label class="checkbox-container">Check to build new movie
 						<input type="checkbox" id="buildMovie" name="buildMovie">
 						<span class="checkmark"></span>
 					</label>
+					</ul>
 
 				</form>
 			</div>
