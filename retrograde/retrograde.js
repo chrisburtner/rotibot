@@ -566,6 +566,7 @@ function doUpdateWormList() {
     highthresh = formData2.get('upperthresh');
     lowthresh = formData2.get('lowerthresh');
     var checkboxUpdateContours = formData2.get('updatecontours');
+    var bgstyle= 0;
     
 
 	 var analrects  = rects.filter(arec => arec.t === 'analysis');
@@ -581,7 +582,7 @@ function doUpdateWormList() {
             "deadworms": deadwormsstring, "analrects": jsonAnalRects, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
             "buildMovie": checkboxbuildmovie, "highthresh": highthresh, "mchan" : moviechannel,
             "lowthresh": lowthresh, "updatecontours": checkboxUpdateContours,
-            "currframe": framenumber, "drawDead": drawDeadWorms, "mres": mres
+            "currframe": framenumber, "drawDead": drawDeadWorms, "mres": mres, "bgstyle": bgstyle
         },
         success: function () {
 

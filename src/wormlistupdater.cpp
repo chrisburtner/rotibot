@@ -645,6 +645,15 @@ string printWormLifespan(string title){
 	return (oss.str());
 }//end printwormlifespan
 
+double medianMat(Mat Input){    
+    Input = Input.reshape(0,1); // spread Input Mat to single row
+    vector<double> vecFromMat;
+    Input.copyTo(vecFromMat); // Copy Input Mat to vector vecFromMat
+    nth_element(vecFromMat.begin(), vecFromMat.begin() + vecFromMat.size() / 2, vecFromMat.end());
+    return vecFromMat[vecFromMat.size() / 2];
+}
+
+
 
 string getStats(int x, int y, int w, int h, int f, string chan, unsigned char bgv) {
 
@@ -657,13 +666,15 @@ string getStats(int x, int y, int w, int h, int f, string chan, unsigned char bg
 	if (chan == string("cherry")) filename << "CHERRY" << pad(f) << ".png";
 	if (chan == string("uv")) filename << "UV" << pad(f) << ".png";
 
-	//debugger << "arect filename:" << filename.str() << endl;
+	debugger << "arect filename:" << filename.str() << endl;
 	
 	Mat thisImg = imread(filename.str());
 	Rect rec(x,y,w,h);
 	Mat recIm = thisImg(rec).clone(); //clone out the Rect
 
 	if(chan== string("bf")) {
+
+		cvtColor(recIm, recIm, cv::COLOR_BGR2GRAY);
 
 
 		double min,max;
@@ -676,9 +687,27 @@ string getStats(int x, int y, int w, int h, int f, string chan, unsigned char bg
 		//output mean
 		ss << mean(recIm)[0] << ",";
 
+		//calculate media pixel value
+		double medianVal= medianMat(recIm);
+		ss << medianVal << ",";
+		
 
-		//output sum area
-		ss << sum(recIm)[0] << ",";
+		//calculate median background from area * min
+		double backgroundVol = (double)recIm.rows * (double)recIm.cols * min;
+		ss << backgroundVol << ",";
+
+
+		//output sum area, ie. volume
+
+		double totvol = sum(recIm)[0];
+		ss << totvol << ",";
+
+		//output sum - bg
+		ss << totvol - backgroundVol << ",";
+
+		
+
+		
 
 		
 		 int histSize = 256; // bin size
@@ -704,6 +733,75 @@ string getStats(int x, int y, int w, int h, int f, string chan, unsigned char bg
 		return ss.str();
 		
 	}//end if brightfield
+	if(chan== string("gfp") || chan== string("cherry") || chan== string("uv") ) {
+		int channel=0; //default UV blue;
+
+		Mat bgr[3];   
+		split(recIm,bgr);
+		
+		if (chan== string("gfp")) channel=1;
+		if (chan== string("cherry")) channel=2;
+
+
+		double min,max;
+
+		//output min and max
+		minMaxLoc(bgr[channel], &min, &max);
+		ss << min << "," << max << ",";
+
+
+		//output mean
+		ss << mean(bgr[channel])[0] << ",";
+
+		//calculate media pixel value
+		double medianVal= medianMat(bgr[channel]);
+		ss << medianVal << ",";
+		
+		//calculate median background from area * min
+		double backgroundVol = (double)bgr[channel].rows * (double)bgr[channel].cols * min;
+		ss << backgroundVol << ",";
+
+		//output sum area, ie. volume
+
+		double totvol = sum(bgr[channel])[0];
+		ss << totvol << ",";
+
+		
+
+
+		
+
+		//output sum - bg
+		ss << totvol - backgroundVol << ",";
+
+
+
+
+		
+		 int histSize = 256; // bin size
+		 float range[] = { 0, 256} ;
+		 const float* histRange = { range };
+
+		 bool uniform = true;
+		 bool accumulate = false;
+
+		 Mat hist;
+
+		 int channels[] = {0};
+
+		 /// Compute the histograms:
+		 calcHist( &bgr[channel], 1, channels, Mat(), hist, 1, &histSize, &histRange, uniform, accumulate );
+
+		 //output histogram
+		 //0-255
+		for( int i = 0; i < histSize; i++ ){
+			ss << hist.at<float>(i) << ",";
+
+		}//end for each value
+		return ss.str();
+		
+	}//end if fluor
+
 	/*
 	    vector<Mat> bgr_planes;
 	    split( recIm, bgr_planes );
@@ -756,6 +854,8 @@ int main(int argc,char **argv){
     	  lowthresh = atoi(string(cgi("lowthresh")).c_str());
     	  currframe = atoi(string(cgi("currframe")).c_str());
 		mchan = cgi("mchan");  
+		string bgstyle = cgi("bgstyle");  
+		
 		   
 		debugger << "L:" << lowthresh << " " << cgi("lowthresh") << " H: " << highthresh  << " " << cgi("highthresh") <<  
 				"EXPID:" << expID << " movie start:" << moviestart << " movie stop:" << moviestop << " mchan:" << mchan << endl;
@@ -820,6 +920,9 @@ int main(int argc,char **argv){
 
 			  ptree rpt;
 			  read_json (Rreadcgi, rpt);
+
+		           //output column header		
+			   rfile << "x,y,width,height,frame,ID,channel,Days, Minutes, Min, Max, Mean, Median, BgVol, Vol, Vol-BgVol" << endl;
 
 			   BOOST_FOREACH(const ptree::value_type &v, rpt.get_child("")) {
 				
