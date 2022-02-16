@@ -126,6 +126,14 @@
 							<label for="upperthresh">Upper Threshold</label>
 							<input type="text" id="upperthresh" name="upperthresh" placeholder="type something...">
 						</li>
+						<li>
+						Contour Channel: <select id="ctchan" name="ctchan">
+	    					<option value="bf">Bright Field</option>
+						<option value="gfp">GFP</option>
+						<option value="cherry">Cherry</option>
+						<option value="uv">UV</option></select>
+
+						</li>
 					</ul>
 					<label class="checkbox-container">Check to update contour
 						thresholds
@@ -135,7 +143,24 @@
 				</form>
 			</div>
 			<button class="collapsible">Lifespan Prediction <span class="expand-mark">+</span></button>
-			<div class="content" id="lp-div"></div>
+			<div class="content" id="lp-div">
+				<form action="" method="post" id="updateForm3">
+					<ul>
+						
+						<li>
+						Lifespan Prediction Channel: <select id="lpchan" name="lpchan">
+	    					<option value="bf">Bright Field</option>
+						<option value="aligned">Aligned</option>
+						<option value="gfp">GFP</option>
+						<option value="cherry">Cherry</option>
+						<option value="uv">UV</option></select>
+
+						</li>
+					</ul>
+					
+				</form>
+
+			</div>
 			<button class="collapsible">Frame Navigation <span class="expand-mark">+</span></button>
 			<div class="content" id="fn-div"></div>
 			<button class="collapsible">Manual Scoring <span class="expand-mark">+</span></button>
@@ -146,6 +171,11 @@
 				<li>
 					<label class="checkbox-container">Brightfield
 						<input type="checkbox" id="BFchan" name="BFchan">
+						<span class="checkmark"></span>
+				</li>
+				<li>
+					<label class="checkbox-container">Aligned
+						<input type="checkbox" id="ALchan" name="ALchan">
 						<span class="checkmark"></span>
 				</li>
 				<li>

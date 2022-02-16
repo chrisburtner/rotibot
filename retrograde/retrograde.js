@@ -11,11 +11,13 @@ function pad(num) {
 var filename = "";      //frame filename
 var img = new Image(); //frames
 var gfpImg = new Image();
+var alignedImg = new Image();
 var cherryImg = new Image();
 var uvImg = new Image();
 var contImg = new Image();
 
 var bfActive = true;
+var alignedActive=false;
 var gfpActive=false;
 var cherryActive=false;
 var uvActive=false;
@@ -158,6 +160,7 @@ function drawChannels() {
 
 
 	 bfActive = document.querySelector("#BFchan").checked;
+	alignedActive = document.querySelector("#ALchan").checked;
 	gfpActive = document.querySelector("#GFPchan").checked;
 	cherryActive= document.querySelector("#CHERRYchan").checked;
 	uvActive = document.querySelector("#UVchan").checked; 
@@ -262,6 +265,8 @@ function LoadFrame() {
     if (framenumber > 999999) framenumber = 999999;
     filename = "/wormbot/" + expID + "/frame" + pad(framenumber) + ".png";
     img.src = filename;
+    filename = "/wormbot/" + expID + "/aligned" + pad(framenumber) + ".png";
+    alignedImg.src = filename;
     filename = "/wormbot/" + expID + "/GFP" + pad(framenumber) + ".png";
     gfpImg.src = filename;
     filename = "/wormbot/" + expID + "/UV" + pad(framenumber) + ".png";
@@ -283,6 +288,20 @@ function LoadFrame() {
 	document.getElementById("BFchan").disabled= true;
 
 	};//end on error
+
+	 alignedImg.onload = function () {
+	
+		
+		drawChannels();
+		document.getElementById("ALchan").disabled= false;
+   	 };
+
+    	alignedImg.onerror = function (){
+		//disable that channel selector if image error
+		document.getElementById("ALchan").disabled= true;
+
+	};//end on error
+
 	
 	  gfpImg.onload = function () {
 	 
@@ -290,6 +309,7 @@ function LoadFrame() {
 	drawChannels();
       
     };
+	
 	gfpImg.onerror = function (){
 	//disable that channel selector
 	document.getElementById("GFPchan").disabled= true;
@@ -563,9 +583,12 @@ function doUpdateWormList() {
 
     var formE2 = document.forms.updateForm2;
     var formData2 = new FormData(formE2);
+    var formE3 = document.forms.updateForm3;
+    var formData3 = new FormData(formE3);
     highthresh = formData2.get('upperthresh');
     lowthresh = formData2.get('lowerthresh');
     var checkboxUpdateContours = formData2.get('updatecontours');
+    var ctchan = formData2.get('ctchan');	
     var bgstyle= 0;
     
 
@@ -582,7 +605,7 @@ function doUpdateWormList() {
             "deadworms": deadwormsstring, "analrects": jsonAnalRects, "expID": expID, "startmovie": startmovie, "stopmovie": stopmovie,
             "buildMovie": checkboxbuildmovie, "highthresh": highthresh, "mchan" : moviechannel,
             "lowthresh": lowthresh, "updatecontours": checkboxUpdateContours,
-            "currframe": framenumber, "drawDead": drawDeadWorms, "mres": mres, "bgstyle": bgstyle
+            "currframe": framenumber, "drawDead": drawDeadWorms, "mres": mres, "bgstyle": bgstyle, "ctchan": ctchan
         },
         success: function () {
 
@@ -658,6 +681,14 @@ $(window).load(function () {
 	bfE.addEventListener( 'change', function() {
 	   	redraw();
 	});
+
+	//add listeners for channel checkboxes
+	var alE = document.querySelector("#ALchan");
+
+	alE.addEventListener( 'change', function() {
+	   	redraw();
+	});
+
 	var gfpE = document.querySelector("#GFPchan");
 
 	gfpE.addEventListener( 'change', function() {
@@ -684,6 +715,7 @@ $(window).load(function () {
     //prompt for initial values
 
      document.querySelector("#BFchan").checked=true;
+     document.querySelector("#ALchan").checked=false;
      document.querySelector("#GFPchan").checked=false;
      document.querySelector("#CHERRYchan").checked=false;
      document.querySelector("#UVchan").checked=false; 	
@@ -726,10 +758,15 @@ $(window).load(function () {
 		console.log(liferects);
             var outputRects = JSON.stringify(liferects);
 		console.log(outputRects);
+
+	    highthresh = formData2.get('upperthresh');
+    	    lowthresh = formData2.get('lowerthresh');
+		var lpchan = formData3.get('lpchan');
+
             $.ajax({
                 type: "POST",
                 url: "/cgi-bin/cgiccretro",
-                data: { "name": outputRects, "expID": expID, "lowthresh": lowthresh, "highthresh": highthresh },
+                data: { "name": outputRects, "expID": expID, "lowthresh": lowthresh, "highthresh": highthresh, "lpchan": lpchan },
                 success: function (data) {
                     alert(data);
 

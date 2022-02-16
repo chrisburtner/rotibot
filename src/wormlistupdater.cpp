@@ -840,6 +840,7 @@ int main(int argc,char **argv){
 	 int highthresh,lowthresh =0;
 	 int currframe=837;
 	string mchan="";
+	string ctchan="";
 	unsigned char bg = 0; //hold the background value
 
 	try {
@@ -847,6 +848,7 @@ int main(int argc,char **argv){
 
 	      string foo = cgi("deadworms");
 	      string bar = cgi("analrects");	
+		ctchan = cgi("ctchan");
 	      expID = atoi(string(cgi("expID")).c_str());
 	      moviestart = atoi(string(cgi("startmovie")).c_str());
 	      moviestop = atoi(string(cgi("stopmovie")).c_str());
@@ -989,8 +991,13 @@ int main(int argc,char **argv){
 	if (cgi.queryCheckbox("updatecontours")){
 		stringstream currimgfilename;
 		stringstream number;
+		string channelName;
+		if (ctchan == "bf") channelName="/frame";
+		else if (ctchan == "gfp") channelName="/GFP";
+		else if (ctchan == "cherry") channelName="/CHERRY";
+		else if (ctchan == "uv") channelName="/UV";
 		number << setfill('0') << setw(6) << currframe;
-		currimgfilename << datapath << expID << "/frame" << number.str() << ".png";
+		currimgfilename << datapath << expID << channelName << number.str() << ".png";
 		debugger << "img filename " << currimgfilename.str() << endl;
 		Update_Contours(currimgfilename.str(),lowthresh, highthresh);
 
