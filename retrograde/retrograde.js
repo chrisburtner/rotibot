@@ -586,7 +586,7 @@ function doUpdateWormList() {
     var formE3 = document.forms.updateForm3;
     var formData3 = new FormData(formE3);
     highthresh = formData2.get('upperthresh');
-    lowthresh = formData2.get('lowerthresh');
+    lowthresh =  formData2.get('lowerthresh');
     var checkboxUpdateContours = formData2.get('updatecontours');
     var ctchan = formData2.get('ctchan');	
     var bgstyle= 0;
@@ -759,8 +759,12 @@ $(window).load(function () {
             var outputRects = JSON.stringify(liferects);
 		console.log(outputRects);
 
-	    highthresh = formData2.get('upperthresh');
-    	    lowthresh = formData2.get('lowerthresh');
+		 var formE2 = document.forms.updateForm2;
+   		 var formData2 = new FormData(formE2);	   
+		 var formE3 = document.forms.updateForm3;
+   		 var formData3 = new FormData(formE3);	   
+		 highthresh = formData2.get('upperthresh');
+    	   	 lowthresh = formData2.get('lowerthresh');
 		var lpchan = formData3.get('lpchan');
 
             $.ajax({

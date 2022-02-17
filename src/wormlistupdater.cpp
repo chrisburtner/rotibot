@@ -343,7 +343,7 @@ static void on_trackbar( int, void* )
 }
 
 //make an updated current_contour.png
-int Update_Contours(string filename, int lowthresh, int highthresh){
+int Update_Contours(string filename, int lowthresh, int highthresh, int imagechannel){
 
 				try{
 							
@@ -355,9 +355,24 @@ int Update_Contours(string filename, int lowthresh, int highthresh){
 							inputImg = imread(filename.c_str());
 							debugger << "empty image " << inputImg.empty() << endl; 
 							debugger << "inputimg filename " << filename << endl;
+							int blurval=4;
 
+							vector<Mat> channels(3);
+							
+							if (imagechannel >= 0) {
+								split(inputImg, channels);
+								debugger << "split,";
+								Mat invt; 
+								bitwise_not (channels[imagechannel], invt ); //invert the image
+								debugger << "bnot,";
+								inputImg = invt.clone();
 
-								cvtColor( inputImg, inputImg, COLOR_BGR2GRAY );
+								debugger << "clone,";
+								//blurval=0;
+								imwrite(string("/wormbot/invertedimage.png").c_str(),inputImg);
+								debugger << "write" << endl;
+							}//end if color image
+							else cvtColor( inputImg, inputImg, COLOR_BGR2GRAY );
 
 
 							if (lowthresh < 0) lowthresh =0;
@@ -370,13 +385,15 @@ int Update_Contours(string filename, int lowthresh, int highthresh){
 							vector<vector<Point> > contours;
 
 							vector<Vec4i> hierarchy;
-							int blurval=4;
 							
 							
 							
-							equalizeHist(inputImg,inputImg);
+							
+							if (imagechannel == -1) equalizeHist(inputImg,inputImg);
+							debugger << "equalize " << endl;
 							//threshold(inputImg,inputImg, binthresh, 255, THRESH_BINARY_INV);
-							blur( inputImg, inputImg, Size(blurval,blurval) );
+							if (blurval >0) blur( inputImg, inputImg, Size(blurval,blurval) );
+						        debugger << "blur " << endl;
 
 							
 								stringstream testfile;
@@ -385,9 +402,13 @@ int Update_Contours(string filename, int lowthresh, int highthresh){
 								debugger << "cannyoutput " << testfile.str() << endl;
 								
 								//Canny( inputImg, canny_output, lowthresh, highthresh, 3);
-								imwrite(testfile.str().c_str(), inputImg);
+								
 
-							
+							Mat element = getStructuringElement(MORPH_RECT,Size( 3, 3 ));
+							erode( inputImg, inputImg,element);
+							dilate( inputImg, inputImg,element);
+
+							imwrite(testfile.str().c_str(), inputImg);
 							
 							
 							Canny( inputImg, canny_output, lowthresh, highthresh, 3);
@@ -992,14 +1013,15 @@ int main(int argc,char **argv){
 		stringstream currimgfilename;
 		stringstream number;
 		string channelName;
-		if (ctchan == "bf") channelName="/frame";
-		else if (ctchan == "gfp") channelName="/GFP";
-		else if (ctchan == "cherry") channelName="/CHERRY";
-		else if (ctchan == "uv") channelName="/UV";
+		int procchan =-1;
+		if (ctchan == "bf") {channelName="/frame"; procchan=-1;}
+		else if (ctchan == "gfp") {channelName="/GFP"; procchan=1;}
+		else if (ctchan == "cherry") {channelName="/CHERRY"; procchan=2;}
+		else if (ctchan == "uv") {channelName="/UV"; procchan=0;}
 		number << setfill('0') << setw(6) << currframe;
 		currimgfilename << datapath << expID << channelName << number.str() << ".png";
-		debugger << "img filename " << currimgfilename.str() << endl;
-		Update_Contours(currimgfilename.str(),lowthresh, highthresh);
+		debugger << "img filename " << currimgfilename.str() << " img channel:" << procchan << endl;
+		Update_Contours(currimgfilename.str(),lowthresh, highthresh, procchan);
 
 	}//end if update contours
 

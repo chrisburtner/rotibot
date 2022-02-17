@@ -180,6 +180,7 @@ public:
 	int w;  //width
 	int h;	//height
 	int n; //the worm's number (:name from JS)
+	string channel; //image channel to use
 
 	vector <Mat> frames;  //store the raw image data from the ROI
 	vector <Mat> contourframes; //store the contour drawing from the ROI
@@ -263,10 +264,22 @@ public:
 
 
 
-	void buildStack(Mat& thisImg, long aof, int idx){
+	void buildStack(Mat& thisImg, long aof, int idx, int channel){
 		if (idx > endframe) return; //if past time of death ignore frame
 		Rect rec(x,y,w,h);
-		frames.push_back(thisImg(rec).clone());
+		Mat tempImg = thisImg(rec).clone();
+		vector<Mat> compos(3);
+		if (channel >= 0) {
+
+			split(tempImg, compos);
+			Mat invt; 
+			bitwise_not (compos[channel], invt ); //invert the image
+			tempImg = invt.clone();
+			
+		}//end if not brightfield
+								
+		
+		frames.push_back(tempImg);
 		ageOnFrame.push_back(aof);
 		frameIndexes.push_back(idx);
 	}//end buildStack
@@ -531,6 +544,7 @@ main(int argc,
 	boostfile << "boostopen" << endl;
 
 	 int max_frame=0;
+	string lpchan;
 
 
    try {
@@ -545,6 +559,7 @@ main(int argc,
       expID = atoi(string(cgi("expID")).c_str());
       lowthresh = atoi(string(cgi("lowthresh")).c_str());
       highthresh = atoi(string(cgi("highthresh")).c_str());
+	lpchan = cgi("lpchan");
       cout << lowthresh << "lowthresh\n";
       cout << highthresh << "highthresh\n";
 
@@ -643,8 +658,15 @@ main(int argc,
 
 
    		stringstream globpattern;
+		string rootname;
+		int channum=-1;
+		if (lpchan == "bf") {rootname = "frame*.png"; channum=-1;}
+		else if (lpchan == "aligned") {rootname = "aligned*.png";  channum=-1;}
+		else if (lpchan == "gfp") {rootname = "GFP*.png"; channum=1;}
+		else if (lpchan == "cherry") {rootname = "CHERRY*.png"; channum=2;}
+		else if (lpchan == "uv") {rootname = "UV*.png";  channum=0;}
 
-   		globpattern  << experimentpath.str().c_str() << string("frame*.png");
+   		globpattern  << experimentpath.str().c_str() << rootname;
    		glob(globpattern.str().c_str(),GLOB_TILDE,NULL,&aligned_result);
 
    		for (unsigned int i=0; i < aligned_result.gl_pathc; i++){
@@ -705,7 +727,7 @@ main(int argc,
 
 
    		 for (vector<WormRegion>::iterator citer = worms.begin(); citer != worms.end(); citer++){
-   			 (*citer).buildStack(imgFrame1,frametimes[i],i);
+   			 (*citer).buildStack(imgFrame1,frametimes[i],i,channum);
    		 }//end for each rectangle
 
 
