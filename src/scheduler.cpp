@@ -630,15 +630,15 @@ void processInput(void){
 string buildInputField(vector<int> openplates){
 	stringstream ss;
 
-	ss << "<select name=\"plate\" id=\"select-plate\" onchange=fillSelectedPlateWithOldData(this.value)> ";
-	// for (vector<int>::iterator citer = openplates.begin(); citer != openplates.end(); citer++){
-	//            ss << "<option name=\"" << *citer << "\" > " << *citer << "</option>";
-	// }//end for openplates
+	ss << "<select name=\"plate\" id=\"select-plate\" > ";  // editing old data broken// onchange=fillSelectedPlateWithOldData(this.value)
+	 for (vector<int>::iterator citer = openplates.begin(); citer != openplates.end(); citer++){
+	           ss << "<option name=\"" << *citer << "\" > " << *citer << "</option>";
+	}//end for openplates
 
 	// for now, hard code 12 plates into it
-	for (int i = 1; i <= 12; i++) {
-		ss << "<option name=\"" << i << "\" > " << i << "</option>";
-	}
+	//for (int i = 1; i <= 12; i++) {
+	//	ss << "<option name=\"" << i << "\" > " << i << "</option>";
+	//}
 	ss << "</select>";
 
 	return(ss.str());
