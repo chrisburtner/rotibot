@@ -85,7 +85,7 @@ function fillSelectedPlateWithOldData(plateNum) {
         // strain 11, startingN 12; startingAge 13;
 
     if (plateNum == undefined) {
-        plateNum = 1;
+        return; //plateNum = 1;
     }
     setOfOldTask.clear();
     var allSlots = document.querySelectorAll(".plate-info");
