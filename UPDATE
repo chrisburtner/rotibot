@@ -1,15 +1,5 @@
 #!/bin/bash
 
-echo "Building Updated Wormbot Applications"
-cat var/release
-make all
-
-sudo killall controllerd
-sudo killall controller
-sudo killall alignerd
-sudo killall master_control_program
-
-
 TESTING=false
 
 
@@ -20,6 +10,9 @@ WD=(pwd)
 ROOT_DIR=$(cat var/root_dir)
 WEB_DIR=/var/www/html/wormbot
 CGI_DIR=$ROOT_DIR/cgi-bin
+GRAPHS_DIR=$ROOT_DIR/graphs
+SCHEDULER_DIR=$ROOT_DIR/scheduler_parts
+
 
 # handle installation directory
 if [ "$#" -eq 1 ]
@@ -34,19 +27,19 @@ fi
 
 
 
-
-
 # move necessary files to root dir
-sudo cp  experimentuploader.html bulkuploader.html graphmaker.html generate_coordinates.py bin/rapidscan bin/alignerd bin/controller wormbot_template.csv bin/master_control_program  $ROOT_DIR
+sudo cp  experimentuploader.html bulkuploader.html graphmaker.html  generate_coordinates.py bin/alignerd bin/controller wormbot_template.csv bin/master_control_program  $ROOT_DIR
+sudo cp -R scheduler_parts $ROOT_DIR
 
 
 # move necessary files to web dir
 sudo cp -r img $WEB_DIR/img
 sudo cp plateform.html $WEB_DIR
+sudo cp www/html/status.html $WEB_DIR
 
 
 # move necessary files to cgi-bin
-sudo cp data_path bin/experimentbrowser bin/marker bin/scheduler bin/bulkuploader bin/cgiccretro bin/wormlistupdater bin/backupexperiment bin/deleteexperiment bin/wormbotstatus bin/graphmaker $CGI_DIR
+sudo cp data_path bin/experimentbrowser bin/marker bin/scheduler bin/cgiccretro bin/wormlistupdater bin/backupexperiment bin/deleteexperiment bin/wormbotstatus bin/graphmaker bin/cropFrames bin/bulkuploader $CGI_DIR
 sudo cp ../ffmpeg-3.4/ffmpeg $CGI_DIR
 sudo cp data_path /usr/lib/cgi-bin #this is for compatibilty following security changes to move cgi bin into /wormbot
 
@@ -59,6 +52,4 @@ sudo cp bin/wormbot /bin
 
 
 
-
-echo "UPDATE COMPLETE"
 
