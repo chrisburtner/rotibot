@@ -678,15 +678,29 @@ void processALine(string csvdataline){
 
 
 
-void processCSVFile(string inputfilename){
+void processCSVFile(string inputfilename, string templatefilename){
 	string fileline;
 	ifstream ifile(inputfilename.c_str());
 	if (!ifile.is_open()) {cout << "<h1>READ FILE FAILED!!!</h1>\n"; return;} //throw error if file not opened
+
+	//open template and get the first 2 lines to check the uploaded file
+	ifstream tfile(templatefilename.c_str());
+	string key0,key1;
+	getline(tfile,key0);
+	getline(tfile,key1);
+	tfile.close();
+
 	int lcount=0;	
 	int expcounter =0;
 	while (getline(ifile,fileline)){
 		if (lcount>0){	//ingnore the template first line
-			if (fileline.find("plate number") != std::string::npos) {;} // ignore template headers
+			if (fileline.find("plate number") != std::string::npos) {
+				if (key1 != fileline){
+					cout << "Line " << lcount <<  " column headers invalid match to current template" << endl;
+					return;
+				}
+
+			} // check template headers for proper column names
 			else { //not a template header try to process it
 				processALine(fileline);
 				expcounter++;
@@ -694,6 +708,16 @@ void processCSVFile(string inputfilename){
 
 
 		}//if not on the first line
+		else {
+
+			if (key0 != fileline) {
+				cout << "Line 0 bad in template <P>" << endl;
+				cout << "key0=" << key0 << "<P>\n";
+				cout << "fileline=" << fileline << "<P>\n";
+				return;
+			
+			}//end if first line doesn't match current template
+		}//end if first line
 		lcount++;
 	}//end while lines in the file	
 	ifile.close();
@@ -741,6 +765,8 @@ void processCSVFile(string inputfilename){
 
 
 int main(int argc, char **argv) {
+
+	bool passedfilters= false;
 	try {
 
 		ifstream readpath("data_path");
@@ -751,14 +777,16 @@ int main(int argc, char **argv) {
 		readpath >> datapath;
 
 		string bulkfilename  = datapath + "uploadedfile.csv";
+		string templatefilename = datapath + "wormbot_template.csv";
+		string remotefilename;
 
 		ofstream outputexperiment(bulkfilename.c_str());  //a file to dump the upload to
 		 const_file_iterator file = cgi.getFile("experiments"); //read in the file
+		remotefilename=  file->getFilename();
 		 file->writeToStream(outputexperiment); //save it to the wormbot directory
 		outputexperiment.close();
 
 		
-
 
 
 		// Send HTTP header
@@ -766,17 +794,30 @@ int main(int argc, char **argv) {
 
 		// Set up the HTML document
 		cout << html() << head(title("WormBot Bulk Upload Complete")) << endl;
-		cout << body() << endl;
+		cout << body()  << "filname uploaded was: " << remotefilename << endl;
 
 		//cout << img().set("src","http://kaeberleinlab.org/images/kaeberlein-lab-logo-2.png") << endl;
+
+		if (remotefilename.find(".csv") == std::string::npos) {
+			cout << "no valid file extension found" << endl;
+
+		} else {
+			cout << "file correctly named .csv" << endl;
+			passedfilters = true;
+		}   
+
 		
 		
 		cout << br() <<endl;
 		cout << img().set("src", "/wormbot/img/Bender.png").set("width","300") << endl;
 		cout << br() <<endl;
 		cout << "<h3>Status</h3>";
-		
-		processCSVFile(bulkfilename);
+		if (passedfilters)
+		processCSVFile(bulkfilename, templatefilename);
+		else {
+			cout << "CSV file not valid or improperly formatted.  Make sure you are using a current template and properly formated file and saving as a text only CSV using openoffice or something else besides Excel" << endl;
+
+		}//end if failed
 
 		//processDeletes();
 		//processInput();

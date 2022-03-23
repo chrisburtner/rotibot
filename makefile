@@ -57,6 +57,9 @@ bulkuploader: src/bulkuploadMini.cpp
 cgiccretro: src/cgiccretro.cpp
 	$(CXX) $(CFLAGS) src/cgiccretro.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/cgiccretro
 
+getfilelist: src/getFileList.cpp
+	$(CXX) $(CFLAGS) src/getFileList.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/getfilelist
+
 wormlistupdater: src/wormlistupdater.cpp
 	$(CXX) $(CFLAGS) src/wormlistupdater.cpp $(LIB) $(OPENCV_LIB) -lcgicc -o bin/wormlistupdater
 
@@ -80,7 +83,7 @@ trainingSetExport: src/trainingSetExport.cpp
 
 
 
-all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan timelog framediff diffcalc
+all: alignerd controller experimentbrowser marker scheduler cgiccretro wormlistupdater colorpicker wormbotstatus experimentuploader plateExplorer graphmaker backcatalog cropFrames trainingSetExport bulkuploader rapidscan timelog framediff diffcalc getfilelist
 
 
 

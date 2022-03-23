@@ -154,6 +154,23 @@ function getToolSelect() {
 	
 }//end getToolSelect
 
+function getCurrTemp(){
+        filename = "/wormbot/" + expID + "/temp" + pad(framenumber) + ".csv";
+        $.ajax({
+                url:filename,
+                success: function (data){
+                        lines=data.split(',');
+                        temperature = lines[1];
+
+                },//end success
+                error: function (){
+                        temperature = "NA";
+                }//end error
+        });
+
+}//end getCurrTemp
+
+
 function drawChannels() {
 	var mrect = canvas.getBoundingClientRect();
 	ctx.clearRect(0, 0, 10000, 10000);
@@ -352,6 +369,7 @@ function LoadFrame() {
 
 	};//end on error
 
+    getCurrTemp();	
     drawChannels();
     drawRects();
     drawElips();
@@ -366,6 +384,7 @@ function LoadFrame() {
 function updateFrameField() {
 	//update the frame field
 	document.getElementById("currframeID").innerHTML = pad(framenumber); 
+	document.getElementById("temperID").innerHTML = temperature;
 	document.getElementById("currexpID").innerHTML = expID; 
 	document.getElementById("zoomID").innerHTML = currzoom.toPrecision(3); 
 
@@ -434,7 +453,19 @@ function getLastFile() {
     //return the 6th line which holds the lastframe
 }//end getLastFile
 
+function buildLinks(){
 
+	var fullname = '/wormbot/' + expID + '/linkfile.html?v=' + Math.random(); 
+	console.log("linkfilename=" + fullname);
+	$.ajax({
+	   
+	   url: fullname,
+	   success: function(data){
+		  document.getElementById("filesID").innerHTML = data
+		}
+	  });
+
+}//end buildLinkS
 
 function checkLock() {
     //check the server lock to see if it's ready
@@ -617,6 +648,21 @@ function doUpdateWormList() {
         }
     });
 
+	
+ $.ajax({
+        type: "POST",
+        url: "/cgi-bin/getfilelist",
+        data: {
+            "expID": expID
+        },
+        success: function () {
+
+           
+	    buildLinks();
+	  		
+
+        }
+    });
 
 
 
@@ -1101,7 +1147,7 @@ $(window).load(function () {
 	//update the frame field
 	updateFrameField();
 	
-
+	//buildLinks();
         drawRects();
 	drawElips();
         drawDeadworms();

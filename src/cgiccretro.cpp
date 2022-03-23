@@ -709,9 +709,12 @@ main(int argc,
    		}//end if not first time through loop
 
    		Mat diffImage;
-   		absdiff(imgFrame1, imgFrame2, diffImage);
+		long imageSum=0;
+   		
+		/*
+		absdiff(imgFrame1, imgFrame2, diffImage);
 
-   		long imageSum=0;
+   		
 
    		MatIterator_<uchar> it, end;
    		            for( it = diffImage.begin<uchar>(), end = diffImage.end<uchar>(); it != end; ++it)
@@ -725,7 +728,7 @@ main(int argc,
 
    		            }//end if exceeds maxJitter
 
-
+		*/ //remove jitter check for testing speed
    		 for (vector<WormRegion>::iterator citer = worms.begin(); citer != worms.end(); citer++){
    			 (*citer).buildStack(imgFrame1,frametimes[i],i,channum);
    		 }//end for each rectangle

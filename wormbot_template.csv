@@ -1,4 +1,4 @@
-wormbot template- DO NOT USE COMMAS IN YOUR TEXT!!!!!!!!!!!!!,,,,,,,,,,,,,
+wormbot template- DO NOT USE COMMAS IN YOUR TEXT!!!!!!!!!!!!!
 plate number,"Row(A,B,C,D)","Number(1,2,3,4)","Time-lapse (1=on,0=off)","Daily monitor (1=on,0=off)","UV (>1=exp time, 0=off)","GFP (>1=exp time, 0=off)","Cherry (>1=exp time, 0=off)",email,investigator,title,description,starting n ,starting age in days,strain
 1,A,1,1,0,0,0,0,jnpitt@uw.edu,pitt,put a title here,put a description here,32,2,enter strain name here
 1,A,2,1,0,0,0,0,jnpitt@uw.edu,pitt,put a title here,put a description here,33,2,enter strain name here

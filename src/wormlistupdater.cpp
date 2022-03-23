@@ -936,7 +936,7 @@ int main(int argc,char **argv){
 
 		//read in analysis rectangles
 			  stringstream rectfilename;
-			  rectfilename << datapath << expID << "/arects.csv";
+			  rectfilename << datapath << expID << "/arects_" << time(0) << ".csv";
 		    	  ofstream rfile(rectfilename.str().c_str());
 		     	  stringstream Rreadcgi;
 			  Rreadcgi << bar;
