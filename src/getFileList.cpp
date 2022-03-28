@@ -72,7 +72,6 @@ string pad(int number){
 
 }//end pad
 
-
 string scanExperimentFiles(string fulldirectory, string searchpattern){
 	glob_t glob_result;
 	glob_t aligned_result;
@@ -97,6 +96,61 @@ string scanExperimentFiles(string fulldirectory, string searchpattern){
 
 
 }//end scanExperimentFiles
+
+string buildTempData(string fulldirectory){
+	glob_t glob_result;
+	glob_t aligned_result;
+	stringstream templist;
+	stringstream globpattern;
+	stringstream outputtempfile;	
+	
+	globpattern  << fulldirectory.c_str() << "temp*.csv";
+	cout <<"globpat:" << globpattern.str() << endl;
+	glob(globpattern.str().c_str(),GLOB_TILDE,NULL,&glob_result);
+
+	outputtempfile << fulldirectory << "alltemp.csv";
+	ofstream ofile(outputtempfile.str().c_str());
+     
+	float sumtemp=0.0;
+	float maxtemp=0.0;
+	float mintemp=100.0;
+	float currtemp=0.0;
+	long totalreadings=0;
+
+	
+	ofile << "Epoch,Temp" << endl;
+	for (unsigned int i=0; i < glob_result.gl_pathc; i++){
+		ifstream tempdata(glob_result.gl_pathv[i]);
+		string templine;
+		getline(tempdata,templine);
+		ofile << templine << endl ;
+
+		size_t found = templine.find_last_of(',');
+		currtemp = atof(templine.substr(found+1).c_str());
+		totalreadings++;		
+		sumtemp+=currtemp;
+		if (currtemp > maxtemp) maxtemp = currtemp;
+		if (currtemp < mintemp) mintemp = currtemp;
+		tempdata.close();
+		
+	}//end for each glob
+
+	
+
+	float tmean = sumtemp/((float)totalreadings);
+
+	ofile << endl << "Mean,Max,Min" << endl << tmean << "," << maxtemp << "," << mintemp << endl;
+	ofile.close();
+
+
+	templist << tmean << "," << maxtemp << "," << mintemp << endl;
+	
+
+	return templist.str();
+	
+
+
+}//end buildTempData
 
 
 //////////// M A I N
@@ -142,20 +196,29 @@ int main(int argc,char **argv){
 
 
 	//rects
+	ofile << "<HR>Image Analysis Results<HR>" << endl;
 	ofile << scanExperimentFiles(exppath.str(), string("arect*"));
 
 	//lifespan files
+	ofile << "<hr>Lifespan Data<hr>" << endl;
 	ofile << scanExperimentFiles(exppath.str(), string("lifespanoutput*"));
-
-	// movies
-	ofile << scanExperimentFiles(exppath.str(), string("*.avi"));
-
-	// description
-	ofile << scanExperimentFiles(exppath.str(), string("description*"));
-
 	// wormlist
 	ofile << scanExperimentFiles(exppath.str(), string("wormlist*"));
 
+	// temperature data
+	ofile << "<HR>Movie Files<hr>" << endl;
+	ofile << "<HR>Temperature Data<hr> Mean,Max,Min temp <P>" << buildTempData(exppath.str()) << "<P>";
+	ofile << scanExperimentFiles(exppath.str(),string("alltemp*"));
+
+	// movies
+	ofile << "<hr>Movie Files<hr>" << endl;
+	ofile << scanExperimentFiles(exppath.str(), string("*.avi"));
+
+	// description
+	ofile << "<hr>Experiment Metadata<hr>" << endl;
+	ofile << scanExperimentFiles(exppath.str(), string("description*"));
+
+	
 	
 	ofile.close();
 

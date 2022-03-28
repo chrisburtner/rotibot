@@ -714,6 +714,7 @@ void processCSVFile(string inputfilename, string templatefilename){
 				cout << "Line 0 bad in template <P>" << endl;
 				cout << "key0=" << key0 << "<P>\n";
 				cout << "fileline=" << fileline << "<P>\n";
+				cout << "number of columns is probably off, remove invalid columns <P>" << endl;  
 				return;
 			
 			}//end if first line doesn't match current template
