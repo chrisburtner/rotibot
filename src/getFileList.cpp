@@ -206,7 +206,6 @@ int main(int argc,char **argv){
 	ofile << scanExperimentFiles(exppath.str(), string("wormlist*"));
 
 	// temperature data
-	ofile << "<HR>Movie Files<hr>" << endl;
 	ofile << "<HR>Temperature Data<hr> Mean,Max,Min temp <P>" << buildTempData(exppath.str()) << "<P>";
 	ofile << scanExperimentFiles(exppath.str(),string("alltemp*"));
 

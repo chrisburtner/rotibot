@@ -16,6 +16,8 @@ var cherryImg = new Image();
 var uvImg = new Image();
 var contImg = new Image();
 
+var doRefresh = false;
+
 var bfActive = true;
 var alignedActive=false;
 var gfpActive=false;
@@ -59,6 +61,7 @@ var numrects = 0;
 var numelips = 0;
 var elipseangle=0.0;
 var ctx;
+var ctx2; //hold overlays
 var needtounlock = false;
 var wormlist = [];
 var shiftLock = false;
@@ -172,23 +175,29 @@ function getCurrTemp(){
 
 
 function drawChannels() {
-	var mrect = canvas.getBoundingClientRect();
-	ctx.clearRect(0, 0, 10000, 10000);
+	//if (doRefresh){
+		var mrect = canvas.getBoundingClientRect();
+		ctx.clearRect(0, 0, 6000, 6000);
+		ctx.fillStyle= "black";
+		ctx.fillRect(0, 0, 6000, 6000);
+		//set ctx params
+		//ctx.globalCompositeOperation = 'source-over';
+		 bfActive = document.querySelector("#BFchan").checked;
+		//ctx.globalCompositeOperation = 'screen';
+		alignedActive = document.querySelector("#ALchan").checked;
+		gfpActive = document.querySelector("#GFPchan").checked;
+		cherryActive= document.querySelector("#CHERRYchan").checked;
+		uvActive = document.querySelector("#UVchan").checked; 
+		contActive = document.querySelector("#CONTchan").checked; 
+		//ctx.globalCompositeOperation = 'source-over';
+		getToolSelect();
 
-
-	 bfActive = document.querySelector("#BFchan").checked;
-	alignedActive = document.querySelector("#ALchan").checked;
-	gfpActive = document.querySelector("#GFPchan").checked;
-	cherryActive= document.querySelector("#CHERRYchan").checked;
-	uvActive = document.querySelector("#UVchan").checked; 
-	contActive = document.querySelector("#CONTchan").checked; 
-	getToolSelect();
-
-	if (bfActive) ctx.drawImage(img, 0, 0);
-	if (gfpActive) ctx.drawImage(gfpImg, 0, 0);
-	if (cherryActive) ctx.drawImage(cherryImg, 0, 0);
-	if (uvActive) ctx.drawImage(uvImg, 0, 0);
-	if (contActive) ctx.drawImage(contImg, 0, 0);
+		if (bfActive) ctx.drawImage(img, 0, 0);
+		if (gfpActive) ctx.drawImage(gfpImg, 0, 0);
+		if (cherryActive) ctx.drawImage(cherryImg, 0, 0);
+		if (uvActive) ctx.drawImage(uvImg, 0, 0);
+		if (contActive) ctx.drawImage(contImg, 0, 0);
+	//}
 	
 	
 
@@ -277,7 +286,8 @@ function LoadWormList() {
 
 
 function LoadFrame() {
-    ctx.clearRect(0, 0, 10000, 10000);
+    doRefresh=false;
+    ctx.clearRect(0, 0, 6000, 6000);
     if (framenumber < 0) framenumber = 0;
     if (framenumber > 999999) framenumber = 999999;
     filename = "/wormbot/" + expID + "/frame" + pad(framenumber) + ".png";
@@ -295,7 +305,7 @@ function LoadFrame() {
     contImg.src = filename;	
     img.onload = function () {
 	
-        
+        doRefresh=true;
 	drawChannels();
 	document.getElementById("BFchan").disabled= false;
     };
@@ -308,7 +318,7 @@ function LoadFrame() {
 
 	 alignedImg.onload = function () {
 	
-		
+		doRefresh=true;
 		drawChannels();
 		document.getElementById("ALchan").disabled= false;
    	 };
@@ -323,6 +333,7 @@ function LoadFrame() {
 	  gfpImg.onload = function () {
 	 
 	document.getElementById("BFchan").disabled= false;
+	doRefresh=true;
 	drawChannels();
       
     };
@@ -335,6 +346,7 @@ function LoadFrame() {
 
   	cherryImg.onload = function () {
 	document.getElementById("CHERRYchan").disabled= false;
+	doRefresh=true;
 	drawChannels();
       
     };
@@ -347,6 +359,7 @@ function LoadFrame() {
 
 	 uvImg.onload = function () {
 	document.getElementById("UVchan").disabled= false;
+	doRefresh=true;
 	drawChannels();
       
     };
@@ -359,6 +372,7 @@ function LoadFrame() {
 
 	 contImg.onload = function () {
 	document.getElementById("CONTchan").disabled= false;
+	doRefresh=true;
 	drawChannels();
       
     };
@@ -833,13 +847,14 @@ $(window).load(function () {
         }//end function
     );
 
-    makeDataPanel();
+   // makeDataPanel();
 
 //
 
     // get references to the canvas and context
     var canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
+   
 	
 
 
@@ -847,7 +862,7 @@ $(window).load(function () {
     ctx.strokeStyle = "green";
     ctx.lineWidth = 3;
 	//set ctx params
-	ctx.globalCompositeOperation = 'screen';
+	ctx.globalCompositeOperation = 'lighter';
 
 
 
@@ -1130,30 +1145,31 @@ $(window).load(function () {
     trackTransforms(ctx);
 
     function redraw() {
+	if (doRefresh){
+		// Clear the entire canvas
+		var p1 = ctx.transformedPoint(0, 0);
+		var p2 = ctx.transformedPoint(canvas.width, canvas.height);
+		ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
 
-        // Clear the entire canvas
-        var p1 = ctx.transformedPoint(0, 0);
-        var p2 = ctx.transformedPoint(canvas.width, canvas.height);
-        ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+		ctx.save();
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.restore();
 
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
+		//ctx.drawImage(img, 0, 0);
+		drawChannels();
 
-        //ctx.drawImage(img, 0, 0);
-	drawChannels();
-
-	//update the frame field
-	updateFrameField();
-	
-	//buildLinks();
-        drawRects();
-	drawElips();
-        drawDeadworms();
-        drawExpID();
-        drawTemp();
-        drawLock();
+		//update the frame field
+		updateFrameField();
+		
+		buildLinks();
+		drawRects();
+		drawElips();
+		drawDeadworms();
+		drawExpID();
+		drawTemp();
+		drawLock();
+	}//end if dorefresh
     }
     redraw();
 
