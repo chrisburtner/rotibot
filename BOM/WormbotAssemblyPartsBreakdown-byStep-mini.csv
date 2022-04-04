@@ -1,0 +1,274 @@
+Part (Step 1),Quantity
+m4 Sliding Nuts,22
+m4x10 mm screws,24
+m6 washers,36
+m4x30 mm screws,2
+m4x16 screw,6
+angle brackets,12
+350mm linear guide,2
+machined optical table,1
+,
+,
+,
+Part (Step 2),Quantity
+m4 x 45 ,4
+m4 x 16,16
+m4 sliding nuts,4
+ m6 washers,4
+,
+Part (Step 3),Quantity
+s3d printed limit switch holders,5
+2 x 3/8 wood screws,10
+limit switches,5
+m4 x 8,5
+for high res camera,
+m4 x 20,2
+,
+,
+Part (Step 4),Quantity
+m4x 10 screws,6
+Limit Swithes (w/ 2 m6 nuts,3
+3d printed precision limit switch holders,3
+,
+step 5,drag chain brackets install
+part,qty
+3dp right bracket,1
+3dp left bracket,2
+m3 x 10mm screw,6
+,
+for low res camera need additional,
+3dp left bracket,1
+m3x10mm screw,2
+,
+,
+step 6,arduino install
+part,qty
+arduino mega,1
+3dp arduino mount,1
+wormbot sheild,1
+m2x10mm screw,1
+m2 nut,1
+m3x10mm screw,1
+m3 nut,1
+m4x8mm screw,4
+m4 sliding nut,8
+,
+step 7,motor controller install
+part,qty
+,
+tb6600 improved motor controller,4
+m4x8mm screw,8
+m4 sliding nuts,4
+,
+step 8,LED lamp prep
+part,qty
+heat shrink tubing,2
+solder,
+soldering iron,
+5watt led lamp,1
+female dc jack,1
+helping hands,
+,
+step 9,LED lamp install
+part,qty
+3dp light tube,1
+3dp led holder,1
+3dp rail holder,1
+small size drag chain,13 segments
+m4 sliding nuts,5
+m6 washers,2
+m4x8mm screws,11
+m4x16mm screw,1
+2020 framing piece,1
+led lamp w/ jack,1
+,
+step 10,camera install
+part,qty
+3dp camera mount,1
+m3x6mm screws,4
+m4x8mm screw,1
+m4x16mm screw,1
+m6 washer,1
+large drag chain,18 segments
+m4 lock nut,1
+camera,1
+3dp drag chain holder,1
+,
+step 10B,installing low res camera
+part,qty
+3dp bracket,1
+3dp camera holder,1
+m4x30mm screw,4
+m2x20mm screw,2
+m2 nuts,4
+m3x6mm screws,2
+ausdom camera,1
+3dp camera spacer,1
+,
+,
+,
+,
+,
+step 11,coating the reflector
+part,qty
+3dp parabolic reflector,1
+printer paper,3
+glue stick,1
+razor blade,1
+,
+step 12,y-axis drag chain install
+part,qty
+large drag chain,18 segments
+m4x20mm screw,2
+m6 washer,2
+,
+step 13,reflector placement
+parts,qty
+m4x10 screws,2
+m6 washer,2
+m4 sliding nuts,2
+#2 3/8 wood screw,1
+coated reflector,1
+reflector tray,1
+,
+step 14,estop install
+parts,qty
+18 guage awg wire,1050mm
+m4x20 screw,2
+m4 nuts,2
+#2 3/8 screw,3
+estop switch,1
+3dp estop housing,1
+3dp estop base,1
+,
+step 15,brick install
+parts,qty
+20amp power,1
+3dp brick holder,2
+m4x10 screw,2
+,
+step 16,y axis motor wiring
+parts,qty
+tape,
+sharpie,
+wire snips,
+wire strippers,
+screw driver,
+,
+step 17,x axis wire extensions
+part,qty
+black wire 22awg,2 x 825mm
+green wire 22awg,2 x 825mm
+red wire 22awg,2 x 825mm
+blue wire 22awg,2 x 825mm
+solder,
+soldering iron,
+helping hands,
+heat shrink tubeing 3cm,8
+lighter,
+tape,
+sharpie,
+strippers,
+snips,
+zip tie,
+,
+step 18,LED wiring
+part,qty
+black wire 22awg,1 x 1800mm 
+red wire 22awg,1 x 1800mm 
+male power jack,1
+heat shrink tubeing 3cm,2
+solder,
+soldering iron,
+helping hands,
+m4 x 10 screw,1
+lighter,
+tape,
+sharpie,
+strippers,
+snips,
+zip tie,
+3d printed wire clip,1
+metal rod,
+,
+step 19,secure x drag chain
+part,qty
+m4x45mm bolt,1
+m4 nylock nut,1
+,
+step 20,run estop wires
+part,qty
+zip tie,4
+,
+step 21,secure LED drag chain
+part,qty
+zip tie,1
+m4x30mm,1
+3d wire clip,1
+m4 lock nut,1
+m4x10mm,1
+m4 sliding nut,1
+,
+step 22,run top limit wires
+part,qty
+usb3 a cable,1
+spade wire connectors,2
+3d print wire clip,1
+1100mm 22awg wire,2
+set screw collar,3
+steel rod,1
+zip tie,1
+m4x12,1
+,
+step 23,run x bot limit wires
+part,qty
+spade wire conn,4
+3d print wire clip,1
+1100mm 22awg wire,2
+1700mm 22awg,2
+m4x10,2
+zip tie,1
+,
+step 24,run x axis drag chain
+part,qty
+m4x45mm,1
+m4 lock nut,1
+,
+step 25,y max limits
+part,qty
+3d wire clip,4
+600mm 22awg,2
+1000mm 22awg,2
+m4 x 10mm,4
+spade crimps,4
+,
+step 26,motor controller wiring
+part,qty
+300mm 22awg,24
+,
+step 30,wire wrap
+part,qty
+curved wire clip,2
+wire wrap,feet
+,
+step 31,install pins
+part,qty
+jb weld,1
+1/8 x 1.25 pins,25
+weigh boat,1
+stirrer,1
+kim wipes,
+ethanol or windex,
+,
+step 32,wire cover
+part,qty
+12v fan,1
+m4x30mm screw,4
+m4 nuts,8
+heat shrink tubing,2
+male jack,1
+female jack,1
+fan guard,1
+solder,
+soldering iron,
+m4x16mm,4
