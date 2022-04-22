@@ -3,6 +3,25 @@
 TESTING=false
 
 
+#get Robot Type
+echo "Enter camera type (U) for UVC or (B) for Basler -fluorescence system: "
+read cameratype
+echo "${cameratype}" > /tmp/cameratype
+cp makefile_uvc makefile
+if [[ "$cameratype" == *[bB]* ]]; then
+
+        { echo  "#define USE_BASLER 1"; cat src/controller.cpp; } > /tmp/controller.cpp
+        cp makefile_basler makefile
+        cp /tmp/controller.cpp src/
+	make controller
+fi 
+ 
+
+
+
+
+
+
 # save working directory
 WD=(pwd)
 
