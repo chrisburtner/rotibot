@@ -1,4 +1,4 @@
-#define USE_BASLER 1
+
 
 //============================================================================
 // Name        : controller.cpp  | with  dot following
