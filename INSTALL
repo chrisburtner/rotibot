@@ -66,6 +66,7 @@ if [[ "$cameratype" == *[bB]* ]]; then
 	{ echo  "#define USE_BASLER 1"; cat src/controller.cpp; } > /tmp/controller.cpp
 	cp makefile_basler makefile
 	cp /tmp/controller.cpp src/
+	make controller
 fi 
  
 
