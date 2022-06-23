@@ -1,4 +1,4 @@
-
+#define USE_BASLER 1
 
 //============================================================================
 // Name        : controller.cpp  | with  dot following
@@ -91,7 +91,7 @@ using namespace boost;
 #define MAX_PLATES 12
 #define MAX_WELLS 12
 #define WELL_WAIT_PERIOD 1  //pause between wells
-#define SCAN_PERIOD (TESTING ? 30 : 1200)   // time between scans (default 1200sec/20min)
+#define SCAN_PERIOD (TESTING ? 30 : 3600)   // time between scans (default 1200sec/20min)
 #define LOAD_WAIT_PERIOD (TESTING ? 20 : 120) // default 120sec/2min
 #define SCAN_COMPLETE_TIMEOUT 1800//maximum time to wait for a scan before resetting robot state 30 min
 
@@ -1385,23 +1385,52 @@ public:
 			const uint32_t cQuality = 90;
 
 			// Create an instant camera object with the first camera device found.
-			CInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice() );
+			//CInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice() );
+			CBaslerUniversalInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice() );
 
 			// Print the model name of the camera.
 			cout << "Using device " << camera.GetDeviceInfo().GetModelName() << endl;
 
-			// Open the camera.
+			//inserted
+			INodeMap& nodemap = camera.GetNodeMap();
 			camera.Open();
+		
 
+		       // Get the integer nodes describing the AOI.
+			CIntegerParameter offsetX( nodemap, "OffsetX" );
+			CIntegerParameter offsetY( nodemap, "OffsetY" );
+			CIntegerParameter width( nodemap, "Width" );
+			CIntegerParameter height( nodemap, "Height" );
+
+			
+			cout << "help ffs:" << camera.LightSourcePreset.GetValue() << endl;
+			camera.LightSourcePreset.SetValue("Off"); 
+			cout << "woeked?:" << camera.LightSourcePreset.GetValue() << endl;
+			//LightSourcePresetEnums e = camera.LightSourcePreset.GetValue();
+
+			
+			CFloatParameter exposure(nodemap, "ExposureTime");
+			CFloatParameter gamma(nodemap, "Gamma");
+			CFloatParameter gain(nodemap, "Gain");
+
+			
+			exposure.SetValue(getExposure(channel));
+			gain.SetValue(getGain(channel));
+			//lightsource.SetValue("Off");
+			
+			//gamma.SetValue(0.55);
+		       
+
+			cout << "gain          : " << gain.GetValue() << endl;
+			cout << " exposure       : " << exposure.GetValue() << endl;
+			//end inserted
 			// Get the required camera settings.
-			CIntegerParameter width( camera.GetNodeMap(), "Width" );
-			CIntegerParameter height( camera.GetNodeMap(), "Height" );
 			CEnumParameter pixelFormat( camera.GetNodeMap(), "PixelFormat" );
 
 			// Optional: Depending on your camera or computer, you may not be able to save
 			// a video without losing frames. Therefore, we limit the resolution:
-			width.TrySetValue( 1920, IntegerValueCorrection_Nearest );
-			height.TrySetValue( 1080, IntegerValueCorrection_Nearest );
+			//width.TrySetValue( 1920, IntegerValueCorrection_Nearest );
+			//nmheight.TrySetValue( 1080, IntegerValueCorrection_Nearest );
 
 			// Map the pixelType
 			CPixelTypeMapper pixelTypeMapper( &pixelFormat );
@@ -1543,6 +1572,8 @@ public:
         
         exposure.SetValue(getExposure(channel));
 	gain.SetValue(getGain(channel));
+	width.SetValue(4608);
+	height.SetValue(3288);
 	//lightsource.SetValue("Off");
 	
 	//gamma.SetValue(0.55);
@@ -2779,7 +2810,7 @@ int main(int argc, char** argv) {
 					cout << "  capturing video for monitor slot " << currMonitorSlot
 						 << " (expID: " << currWell->expID << ")" << endl;
 					#ifdef USE_BASLER					
-						currWell->capture_pylon_video(&scanTimer,BRIGHTFIELD);
+						currWell->capture_pylon_video(&scanTimer,CAPTURE_BF);
 					#else
 						currWell->captureVideo(&scanTimer);
 					#endif
