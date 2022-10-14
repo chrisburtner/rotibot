@@ -38,6 +38,9 @@ rapidscan: src/rapidscan.cpp
 colorpicker: src/colorpicker.cpp
 	$(CXX) $(CFLAGS) src/colorpicker.cpp $(LIB) $(OPENCV_LIB) -o bin/colorpicker
 
+getfilelist: src/getFileList.cpp
+	$(CXX) $(CFLAGS) src/getFileList.cpp -lcgicc $(LIB) $(OPENCV_LIB) -o bin/getfilelist
+
 
 experimentbrowser: src/experimentbrowser.cpp
 	$(CXX) $(CFLAGS) src/experimentbrowser.cpp -lcgicc -o bin/experimentbrowser

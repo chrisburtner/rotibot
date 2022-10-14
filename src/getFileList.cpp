@@ -161,6 +161,9 @@ int main(int argc,char **argv){
 	getline(pathfile,datapath);
 	pathfile.close();
 
+	//temp fix
+	datapath = "/wormbot/";
+
 	
 	Cgicc cgi;
 
