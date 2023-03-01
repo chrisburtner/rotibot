@@ -130,7 +130,7 @@ using namespace boost;
 #define CAPTURE_CHERRY 2
 #define CAPTURE_UV 3
 
-#define DEFAULT_EXPOSURE 4500
+#define DEFAULT_EXPOSURE 10000
 
 #define ACCEPTABLE_JITTER 2
 #define JITTER_WAIT 500
@@ -146,9 +146,9 @@ using namespace boost;
 
 //gain params
 #define DEFAULT_GAIN 0.0f
-#define GFP_GAIN 10.0f
-#define UV_GAIN 10.0f
-#define CHERRY_GAIN 10.0f
+#define GFP_GAIN 15.0f
+#define UV_GAIN 15.0f
+#define CHERRY_GAIN 15.0f
 
 
 
