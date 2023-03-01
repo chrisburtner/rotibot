@@ -1,4 +1,5 @@
 #define USE_BASLER 1
+#define USE_BASLER 1
 
 //============================================================================
 // Name        : controller.cpp  | with  dot following
@@ -91,7 +92,7 @@ using namespace boost;
 #define MAX_PLATES 12
 #define MAX_WELLS 12
 #define WELL_WAIT_PERIOD 1  //pause between wells
-#define SCAN_PERIOD (TESTING ? 30 : 3600)   // time between scans (default 1200sec/20min)
+#define SCAN_PERIOD (TESTING ? 30 : 1800)   // time between scans (default 1200sec/20min)
 #define LOAD_WAIT_PERIOD (TESTING ? 20 : 120) // default 120sec/2min
 #define SCAN_COMPLETE_TIMEOUT 1800//maximum time to wait for a scan before resetting robot state 30 min
 
@@ -129,7 +130,7 @@ using namespace boost;
 #define CAPTURE_CHERRY 2
 #define CAPTURE_UV 3
 
-#define DEFAULT_EXPOSURE 45000
+#define DEFAULT_EXPOSURE 4500
 
 #define ACCEPTABLE_JITTER 2
 #define JITTER_WAIT 500
@@ -1572,8 +1573,8 @@ public:
         
         exposure.SetValue(getExposure(channel));
 	gain.SetValue(getGain(channel));
-	width.SetValue(4608);
-	height.SetValue(3288);
+	width.SetValue(2590);
+	height.SetValue(1942);
 	//lightsource.SetValue("Off");
 	
 	//gamma.SetValue(0.55);
