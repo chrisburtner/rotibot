@@ -2799,36 +2799,36 @@ int main(int argc, char** argv) {
 			
 				
 			// check monitor slot
-				//currMonitorSlot = calcCurrSlot();
-				Well* currWell = monitorSlots[currMonitorSlot];
-				stringstream debg;
-				debg <<	"True : currMonitorSlot=" << currMonitorSlot << " calcurrslot()=" << calcCurrSlot() << " \n";						
-				writeToLog(debg.str());
-				if (currWell != NULL) {
-					cout << "  capturing video for monitor slot " << currMonitorSlot
-						 << " (expID: " << currWell->expID << ")" << endl;
-					#ifdef USE_BASLER					
-						currWell->capture_pylon_video(&scanTimer,CAPTURE_BF);
-					#else
-						currWell->captureVideo(&scanTimer);
-					#endif
+			//currMonitorSlot = calcCurrSlot();
+			stringstream debg;
+			debg << "True : currMonitorSlot=" << currMonitorSlot
+     			<< " calcurrslot()=" << calcCurrSlot() << " \n";
+			writeToLog(debg.str());
 
-					// start video analysis
-					/*
-					stringstream cmd;
-					cmd << "sudo /usr/lib/cgi-bin/wormtracker " // location of wormtracker
-						<< currWell->directory << "/day" << currWell->getCurrAge()
-						<< ".avi" << " " // video file
-						<< currWell->directory // dir to put analysis data
-						<< " &"; // run process in background
-					system(cmd.str().c_str());*/
+			// Fire four phase-shifted monitor slots: S, S+36, S+72, S+108 (144/4 stride)
+			int stride = NUM_WELLS / 4; // 144/4 = 36
+			for (int k = 0; k < 4; ++k) {
+    			int slot = (currMonitorSlot + k * stride) % NUM_WELLS;
+    			Well* w = monitorSlots[slot];
 
-				} else {
-					cout << "  skip video for monitor slot " << currMonitorSlot
-						 << " (no well found)" << endl;
-				}
-				if (++currMonitorSlot >= NUM_WELLS) currMonitorSlot=0; 
-				debg <<	" post capture currMonitorSlot=" << currMonitorSlot << " \n";
+    			if (w != NULL) {
+        			cout << "  capturing video for monitor slot " << slot
+             			<< " (expID: " << w->expID << ")" << endl;
+        			#ifdef USE_BASLER
+            			w->capture_pylon_video(&scanTimer, CAPTURE_BF);
+        			#else
+            			w->captureVideo(&scanTimer);
+        			#endif
+    			} else {
+        			cout << "  skip video for monitor slot " << slot
+             			<< " (no well found)" << endl;
+    			}
+			}
+
+			// Advance one base slot per loop, as before
+			if (++currMonitorSlot >= NUM_WELLS) currMonitorSlot = 0;
+			debg << " post capture currMonitorSlot=" << currMonitorSlot << " \n";
+			   
 			
 
 			// zero the plotter
