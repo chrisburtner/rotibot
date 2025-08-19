@@ -72,7 +72,7 @@ fi
 
 
 #get Robot Size
-echo "Enter WormBot size (6) WormBotMini or (12) WormBot standard: "
+echo "Enter WormBot size (6) Mini or (12) Full: "
 read robotsize
 echo "${robotsize}" > /tmp/robotsize
 
