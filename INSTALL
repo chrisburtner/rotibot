@@ -52,7 +52,7 @@ sudo service apache2 restart
 sudo ldconfig -v
 
 #get Robot Name
-echo "Enter a unique name for this WormBot: "
+echo "Enter a unique name for this robot: "
 read machinename
 echo "${machinename}" > /tmp/machinename
 cd $WD
@@ -72,7 +72,7 @@ fi
 
 
 #get Robot Size
-echo "Enter WormBot size (6) WormBotMini or (12) WormBot standard: "
+echo "Enter robot size (6) Mini or (12) Standard: "
 read robotsize
 echo "${robotsize}" > /tmp/robotsize
 
