@@ -1779,11 +1779,10 @@ public:
 		vidtimeout << "number of second available for video =" << maxVideoLength << endl;
 		writeToLog(vidtimeout.str());
 
-		if (maxVideoLength < 30) { videoTimer.startTimer((long)30);}
-		else{		
-			if (maxVideoLength < VIDEO_DURATION) videoTimer.startTimer((long)maxVideoLength-20); 
-			else videoTimer.startTimer((long)VIDEO_DURATION);
-		}
+		
+		if (maxVideoLength < VIDEO_DURATION) videoTimer.startTimer((long)maxVideoLength-20); 
+		else videoTimer.startTimer((long)VIDEO_DURATION);
+		
 		
 
 
