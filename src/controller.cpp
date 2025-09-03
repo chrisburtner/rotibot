@@ -89,9 +89,10 @@ using namespace boost;
 #define MAX_PLATES 12
 #define MAX_WELLS 12
 #define WELL_WAIT_PERIOD 1  //pause between wells
-#define SCAN_PERIOD (TESTING ? 30 : 1800)   // time between scans (default 1200sec/20min)
+#define SCAN_PERIOD (TESTING ? 30 : 21600)   // time between scans → 4 scans/day
 #define LOAD_WAIT_PERIOD (TESTING ? 20 : 120) // default 120sec/2min
 #define SCAN_COMPLETE_TIMEOUT 1800//maximum time to wait for a scan before resetting robot state 30 min
+#define SCANS_PER_DAY (SECONDS_IN_DAY / SCAN_PERIOD)
 
 #define WELL_STATE_START 2
 #define WELL_STATE_ACTIVE 1
@@ -207,6 +208,16 @@ int calcCurrSlot() {
 	//cout << "calccurrtime currtime =" << currTime << endl; 
 	return (int) ((double) currTime / SECONDS_IN_DAY * NUM_WELLS);
 }
+
+
+static inline int getSecondsSinceMidnight(); // assume you already have this
+static inline int getCurrAge();               // your “day since start”
+
+static inline int currentScanWindow() {
+    int t = getSecondsSinceMidnight();
+    return (t / SCAN_PERIOD) % SCANS_PER_DAY;   // 0..3
+}
+
 
 string readArduino(void){
 	string read;
@@ -480,6 +491,11 @@ public:
 	long activeUV; 
 	bool timelapseActive;
 	int monitorSlot;
+
+	// track per-day, per-window captures (for the 4 windows/day model)
+	int lastMonitorDay;       // -1 until first capture
+	int lastMonitorWindow;    // -1 until first capture (0..SCANS_PER_DAY-1)
+	
 	string wellname;
 	string strain;
 	int targetx; //hold the centroid coordinates of pink target
@@ -487,7 +503,7 @@ public:
 	bool hasTracking;
 
 
-	Well(void){}
+	Well(void) : lastMonitorDay(-1), lastMonitorWindow(-1) {}
 	//int getRank(string thewelltorank);
 
 	Well(string inputline) {
@@ -569,7 +585,10 @@ public:
 			hasTracking=true;
 						
 		} else hasTracking=false;//end if there was a loc-nar
-			
+
+		lastMonitorDay    = -1;
+		lastMonitorWindow = -1;
+
 		//printDescriptionFile();
 	}   //end construct
 
@@ -1761,7 +1780,8 @@ public:
 		// open output
 		VideoWriter output;
 		stringstream filename;
-		filename << directory << "/day" << getCurrAge() << ".avi";
+		filename << directory << "/day" << getCurrAge() << "_win" << currentScanWindow() << ".avi";
+
 		Size size = Size(CAMERA_FRAME_WIDTH, CAMERA_FRAME_HEIGHT);
 
 		output.open(filename.str().c_str(), VideoWriter::fourcc('M', 'P', '4', '2'),
@@ -1963,6 +1983,40 @@ public:
 
 // all wells used in current experimentation
 vector <Well*> wells;
+
+// Record every eligible well exactly once per window (0..SCANS_PER_DAY-1).
+// limitTimer should be the same Timer that gates the scan window.
+void captureAllMonitoredWellsForThisWindow(Timer* limitTimer) {
+    const int window = currentScanWindow();   // you added this in Step 2
+
+    for (std::vector<Well*>::iterator it = wells.begin(); it != wells.end(); ++it) {
+        Well* w = *it;
+        if (!w) continue;
+
+        // Only active wells that requested daily monitoring:
+        if (w->status != WELL_STATE_ACTIVE) continue;
+        if (w->monitorSlot == MONITOR_STATE_OFF) continue;  // treat as "not monitored"
+        // If you want timelapse exclusivity, uncomment the next line:
+        // if (w->timelapseActive) continue;
+
+        // Guard: skip if already captured this *day+window*
+        int today = w->getCurrAge();
+        if (w->lastMonitorDay == today && w->lastMonitorWindow == window) continue;
+
+        // ---- Perform the actual 10 s capture ----
+        #ifdef USE_BASLER
+            w->capture_pylon_video(limitTimer, CAPTURE_BF);
+        #else
+            w->captureVideo(limitTimer);
+        #endif
+        // ----------------------------------------
+
+        // Mark done for this window
+        w->lastMonitorDay    = today;
+        w->lastMonitorWindow = window;
+    }
+}
+
 
 // Holds pointers to wells which have been
 // requested by experimenter to be video recorded.
@@ -2795,39 +2849,11 @@ int main(int argc, char** argv) {
 			pdebg << "precondition currMonitorSlot=" << currMonitorSlot << " calcurrslot()=" << calcCurrSlot() << " \n";
 			writeToLog(pdebg.str());
 
-			
-				
-			// check monitor slot
-				//currMonitorSlot = calcCurrSlot();
-				Well* currWell = monitorSlots[currMonitorSlot];
-				stringstream debg;
-				debg <<	"True : currMonitorSlot=" << currMonitorSlot << " calcurrslot()=" << calcCurrSlot() << " \n";						
-				writeToLog(debg.str());
-				if (currWell != NULL) {
-					cout << "  capturing video for monitor slot " << currMonitorSlot
-						 << " (expID: " << currWell->expID << ")" << endl;
-					#ifdef USE_BASLER					
-						currWell->capture_pylon_video(&scanTimer,CAPTURE_BF);
-					#else
-						currWell->captureVideo(&scanTimer);
-					#endif
+		
+			// Capture one video per monitored well in this 6-hour window
+			captureAllMonitoredWellsForThisWindow(&scanTimer);
 
-					// start video analysis
-					/*
-					stringstream cmd;
-					cmd << "sudo /usr/lib/cgi-bin/wormtracker " // location of wormtracker
-						<< currWell->directory << "/day" << currWell->getCurrAge()
-						<< ".avi" << " " // video file
-						<< currWell->directory // dir to put analysis data
-						<< " &"; // run process in background
-					system(cmd.str().c_str());*/
-
-				} else {
-					cout << "  skip video for monitor slot " << currMonitorSlot
-						 << " (no well found)" << endl;
-				}
-				if (++currMonitorSlot >= NUM_WELLS) currMonitorSlot=0; 
-				debg <<	" post capture currMonitorSlot=" << currMonitorSlot << " \n";
+			debg <<	" post capture currMonitorSlot=" << currMonitorSlot << " \n";
 			
 
 			// zero the plotter
