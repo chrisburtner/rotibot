@@ -1,5 +1,5 @@
 #define CAMERA_FRAME_WIDTH 1920
 #define CAMERA_FRAME_HEIGHT 1080
-#define VIDEO_DURATION 10 // in seconds
+#define VIDEO_DURATION 20 // in seconds
 
 #define DESC_TOTAL_FRAMES 6
