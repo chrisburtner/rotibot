@@ -210,9 +210,6 @@ int calcCurrSlot() {
 }
 
 
-static inline int getSecondsSinceMidnight(); // assume you already have this
-static inline int getCurrAge();               // your “day since start”
-
 static inline int currentScanWindow() {
     int t = getSecondsSinceMidnight();
     return (t / SCAN_PERIOD) % SCANS_PER_DAY;   // 0..3
@@ -2853,7 +2850,11 @@ int main(int argc, char** argv) {
 			// Capture one video per monitored well in this 6-hour window
 			captureAllMonitoredWellsForThisWindow(&scanTimer);
 
-			debg <<	" post capture currMonitorSlot=" << currMonitorSlot << " \n";
+			pdebg.str("");
+			pdebg.clear();
+			pdebg << "post capture currMonitorSlot=" << currMonitorSlot << " \n";
+			writeToLog(pdebg.str());
+
 			
 
 			// zero the plotter
