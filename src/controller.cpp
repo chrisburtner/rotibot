@@ -740,6 +740,23 @@ public:
 		return (int)(current - starttime + SECONDS_IN_HOUR) / SECONDS_IN_DAY + startingAge;
 	}
 
+	// Count whole calendar days since the start date (midnight-to-midnight, local time)
+	int getCalendarDaySinceStart() const {
+   	 time_t now; time(&now);
+
+   	 struct tm s = *localtime(&starttime);
+  	  struct tm n = *localtime(&now);
+
+    // normalize to local midnight for each date
+    s.tm_hour = s.tm_min = s.tm_sec = 0;
+    n.tm_hour = n.tm_min = n.tm_sec = 0;
+
+    time_t sm = mktime(&s);   // start date's midnight
+    time_t nm = mktime(&n);   // today's midnight
+    return (int)((nm - sm) / SECONDS_IN_DAY);   // 0,1,2,...
+}
+
+
 	int incrementFrame(int SOURCEFLAG){
 	//code determines when to implement the frame counter
 
@@ -1459,8 +1476,10 @@ public:
 			    cQuality );
 
 			// Open the video writer.
-			videoWriter.Open( "/wormbot/_TestVideo.mp4" );
-
+			std::stringstream vidname;
+			vidname << directory << "/day" << getCalendarDaySinceStart() << "_win" << currentScanWindowLabel() << ".avi";
+			videoWriter.Open( vidname.str().c_str() );
+				
 			// Start the grabbing of c_countOfImagesToGrab images.
 			// The camera device is parameterized with a default configuration which
 			// sets up free running continuous acquisition.
@@ -1777,8 +1796,8 @@ public:
 		// open output
 		VideoWriter output;
 		stringstream filename;
-		filename << directory << "/day" << getCurrAge() << "_win" << currentScanWindow() << ".avi";
-
+		filename << directory << "/day" << getCalendarDaySinceStart() << "_vid" << currentScanWindowLabel() << ".avi";
+		
 		Size size = Size(CAMERA_FRAME_WIDTH, CAMERA_FRAME_HEIGHT);
 
 		output.open(filename.str().c_str(), VideoWriter::fourcc('M', 'P', '4', '2'),
@@ -1977,6 +1996,9 @@ public:
 
 };//end class well
 
+static inline int currentScanWindowLabel() {
+    return currentScanWindow() + 1;  // was 0..3, now 1..4 for naming
+}
 
 // all wells used in current experimentation
 vector <Well*> wells;
