@@ -215,6 +215,11 @@ static inline int currentScanWindow() {
     return (t / SCAN_PERIOD) % SCANS_PER_DAY;   // 0..3
 }
 
+// 1-based label for the scan window used in filenames (win1..win4)
+static inline int currentScanWindowLabel() {
+    return currentScanWindow() + 1;
+}
+
 
 string readArduino(void){
 	string read;
@@ -1477,7 +1482,7 @@ public:
 
 			// Open the video writer.
 			std::stringstream vidname;
-			vidname << directory << "/day" << getCalendarDaySinceStart() << "_win" << currentScanWindowLabel() << ".avi";
+			vidname << directory << "day" << getCalendarDaySinceStart() << "_win" << currentScanWindowLabel() << ".avi";
 			videoWriter.Open( vidname.str().c_str() );
 				
 			// Start the grabbing of c_countOfImagesToGrab images.
@@ -1796,7 +1801,7 @@ public:
 		// open output
 		VideoWriter output;
 		stringstream filename;
-		filename << directory << "/day" << getCalendarDaySinceStart() << "_vid" << currentScanWindowLabel() << ".avi";
+		filename << directory << "day" << getCalendarDaySinceStart() << "_vid" << currentScanWindowLabel() << ".avi";
 		
 		Size size = Size(CAMERA_FRAME_WIDTH, CAMERA_FRAME_HEIGHT);
 
@@ -1996,9 +2001,6 @@ public:
 
 };//end class well
 
-static inline int currentScanWindowLabel() {
-    return currentScanWindow() + 1;  // was 0..3, now 1..4 for naming
-}
 
 // all wells used in current experimentation
 vector <Well*> wells;
