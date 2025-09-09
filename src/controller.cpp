@@ -960,7 +960,6 @@ public:
       			<< "_frame" << sub
      			<< ".png";
 			
-			filename << directory << "frame" << number.str() << ".png";
 			gfpFilename << directory << "GFP" << number.str() << ".png";
 			cherryFilename << directory << "cherry" << number.str() << ".png";
 
@@ -1709,13 +1708,22 @@ public:
 
 				switch(channel) {
 
-					case CAPTURE_BF:
-						filename << directory << "frame" << number.str() << ".png";
-						//no channels to merge, just save it 
-						//CImagePersistence::Save( ImageFileFormat_Png, filename.str().c_str(), ptrGrabResult );
-						writeTimestamp(src_gray,filename.str());
-						imwrite(filename.str(), src_gray, compression_params);
-						break;
+				case CAPTURE_BF: {
+   					int day = getCalendarDaySinceStart();
+    				int img = currentScanWindowLabel();   // 1..4
+    				int sub = subframe;                   // 1 or 2
+
+    			filename << directory
+            		<< "Day"   << day
+             		<< "_img"  << img
+             		<< "_frame"<< sub
+             		<< ".png";
+
+    			writeTimestamp(src_gray, filename.str());
+    			imwrite(filename.str(), src_gray, compression_params);
+    			break;
+				}
+
 
 					case CAPTURE_GFP:
 						filename << directory << "GFP" << number.str() << ".png";
