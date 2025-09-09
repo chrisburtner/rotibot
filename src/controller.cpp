@@ -887,7 +887,7 @@ public:
 	}//end write time stamp
 
 
-	int capture_frame(int doAlign){
+	int capture_frame(int doAlign, int subframe = 1){
 
 		try {
 
@@ -947,6 +947,18 @@ public:
 			stringstream number;
 			number << setfill('0') << setw(6) << currentframe;
 			recordTemp(number.str());
+
+			int day = getCalendarDaySinceStart();
+			int img = currentScanWindowLabel();
+			int sub = subframe; // 1 or 2 from caller
+
+			filename.str("");
+			filename.clear();
+			filename << directory
+      			<< "Day" << day
+     			<< "_img" << img
+      			<< "_frame" << sub
+     			<< ".png";
 			
 			filename << directory << "frame" << number.str() << ".png";
 			gfpFilename << directory << "GFP" << number.str() << ".png";
@@ -1552,7 +1564,7 @@ public:
 	}//end capture pylon video
 
 
-	int capture_pylon(int doaligner, int channel){
+	int capture_pylon(int doaligner, int channel, int subframe = 1){
 
 		//cout << "cap pylon" << endl;
 
@@ -2336,9 +2348,9 @@ void scanExperiments(void) {
 					thisWell->gotoWell(); // goto best focus
 					while (captured != 1) {
 						#ifdef USE_BASLER
-							captured = thisWell->capture_pylon(align, CAPTURE_BF);
+							captured = thisWell->capture_pylon(align, CAPTURE_BF, firstframe ? 1 : 2);
 						#else
-							captured = thisWell->capture_frame(align);
+							captured = thisWell->capture_frame(align, firstframe ? 1 : 2);
 						#endif
 						
 					}
