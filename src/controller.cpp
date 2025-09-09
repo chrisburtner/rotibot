@@ -1138,7 +1138,6 @@ public:
 			stringstream number;
 			number << setfill('0') << setw(6) << currentframe;
 			
-			filename << directory << "frame" << number.str() << ".png";
 			gfpFilename << directory << "GFP" << number.str() << ".png";
 			cherryFilename << directory << "cherry" << number.str() << ".png";
 
