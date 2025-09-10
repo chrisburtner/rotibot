@@ -957,7 +957,7 @@ public:
 			filename << directory
       			<< "Day" << day
      			<< "_img" << img
-      			<< "_frame" << sub
+      			<< "_" << sub
      			<< ".png";
 			
 			gfpFilename << directory << "GFP" << number.str() << ".png";
@@ -1715,7 +1715,7 @@ public:
     			filename << directory
             		<< "Day"   << day
              		<< "_img"  << img
-             		<< "_frame"<< sub
+             		<< "_"<< sub
              		<< ".png";
 
     			writeTimestamp(src_gray, filename.str());
