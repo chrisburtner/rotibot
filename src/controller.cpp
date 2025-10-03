@@ -1795,7 +1795,7 @@ public:
 	int captureVideo(Timer* limitTimer) {
 
 		gotoWell();
-		setLamp(255);
+		setLamp(7);
 
 		setBrightfieldParams();
 
@@ -2347,7 +2347,7 @@ void scanExperiments(void) {
 
 				if (thisWell->status == WELL_STATE_ACTIVE && thisWell->timelapseActive) {
 					thisWell->gotoWell();
-					setLamp(255);
+					setLamp(7);
 					int captured = 0;
 					#ifdef USE_BASLER
 						if (ZAXIS) thisWell->focusCamera();
